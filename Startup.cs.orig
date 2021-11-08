@@ -1,0 +1,103 @@
+using Crud.Data;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.HttpsPolicy;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
+using Microsoft.OpenApi.Models;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Threading.Tasks;
+using Crud.Models;
+using Microsoft.Extensions.Options;
+using Crud.Services;
+
+namespace Crud
+{
+    public class Startup
+    {
+        public Startup(IConfiguration configuration)
+        {
+            Configuration = configuration;
+        }
+
+        public IConfiguration Configuration { get; }
+        private readonly string MyCors = "MyCors";
+
+
+        // This method gets called by the runtime. Use this method to add services to the container.
+        public void ConfigureServices(IServiceCollection services)
+        {
+            services.AddDbContext<ApplicationDbContext>(option => option.UseSqlServer(Configuration.GetConnectionString("connection")));
+
+            services.Configure<CreadoresUYDatabaseSettings>(
+                Configuration.GetSection(nameof(CreadoresUYDatabaseSettings)));
+
+            services.AddSingleton<ICreadoresUYDatabaseSettings>(sp =>
+                sp.GetRequiredService<IOptions<CreadoresUYDatabaseSettings>>().Value);
+            services.AddSingleton<EstadisticaContenidoService>();
+            services.AddSingleton<EstadisticaCreadorService>();
+            services.AddSingleton<EstadisticaPlataformaService>();
+
+
+            services.AddControllersWithViews();
+            services.AddControllers();
+            // Asigna los valores de la sección de Paypal del archivo appsettings.json a la clase PaypalApiSetting
+            services.Configure<PaypalApiSetting>(Configuration.GetSection("Paypal"));
+            services.AddCors(option =>
+                option.AddPolicy(MyCors, Builder =>
+                {
+                    Builder.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin();
+                })
+            );
+            services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "Api.Crud", Version = "v1" });
+                var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+                c.IncludeXmlComments(xmlPath);
+            });
+        }
+
+        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        {
+
+            if (env.IsDevelopment())
+            {
+                app.UseDeveloperExceptionPage();
+                app.UseSwagger();
+                app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Api.Crud v1"));
+            }
+            else
+            {
+                app.UseExceptionHandler("/Home/Error");
+                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+                app.UseHsts();
+            }
+            app.UseHttpsRedirection();
+            app.UseStaticFiles();
+
+            app.UseRouting();
+
+            app.UseCors(MyCors);
+
+            app.UseAuthorization();
+
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapControllers();
+                endpoints.MapControllerRoute(
+                    name: "default",
+                    pattern: "{controller=Home}/{action=Index}/{id?}");
+            });
+
+        }
+    }
+}

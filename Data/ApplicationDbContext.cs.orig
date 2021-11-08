@@ -1,0 +1,24 @@
+﻿using System;
+using Crud.Models;
+using System.Collections.Generic;
+using Microsoft.EntityFrameworkCore;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace Crud.Data
+{
+    public class ApplicationDbContext : DbContext
+    {
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
+        {
+
+        }
+
+        public DbSet<MediosDePagos> MediosDePagos { get; set; }
+        public DbSet<Pago> Pagos {get; set; }
+        public DbSet<PayPal> PayPals { get; set; }
+        public DbSet<TarjetaCredito> tarjetaCreditos { get; set; }
+        public DbSet<Crud.Models.TipoSuscripcion> TipoSuscripcion { get; set; }
+
+    }
+}

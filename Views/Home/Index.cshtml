@@ -1,0 +1,26 @@
+﻿@using Microsoft.Extensions.Options
+@using Crud.Models
+@using Crud.Controllers
+@inject IOptions<PaypalApiSetting> pSetting
+
+
+
+@{
+    ViewData["Title"] = "Página de Inicio";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Bienvenido, para crear, editar y/o eliminar medios de pago, vaya al botón Crud</h1>
+    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+</div>
+<br />
+
+<div id="div_sbtn1" style="width:30%;margin-top:50px"></div>
+
+@section Scripts{
+    <script>paypal.Buttons().render('#div_sbtn1');</script>
+}
+
+
+
+<script src="https://www.paypal.com/sdk/js?client-id=@pSetting.Value.ClientID&currency=EUR" id="paypal_sdk"></script>
