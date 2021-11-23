@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Crud.Data;
 using Crud.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 namespace Crud.Controllers
 {
@@ -33,7 +35,7 @@ namespace Crud.Controllers
             {
                 categorias =
                         from c in _context.Categoria
-                        where c.Nombre.Contains(searchString) 
+                        where c.Nombre.Contains(searchString)
                         select c;
             }
             return await categorias.ToListAsync();

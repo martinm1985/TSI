@@ -7,6 +7,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Crud.Data;
 using Crud.Models;
+using Crud.DTOs;
+using Crud.Services;
+using System.Text.RegularExpressions;
 
 namespace Crud.Controllers
 {
@@ -15,9 +18,11 @@ namespace Crud.Controllers
     public class AudioController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IIdentityService _identityService;
 
-        public AudioController(ApplicationDbContext context)
+        public AudioController(ApplicationDbContext context, IIdentityService identityService)
         {
+            _identityService = identityService;
             _context = context;
         }
 
@@ -30,9 +35,34 @@ namespace Crud.Controllers
 
         // GET: api/Audio/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Audio>> GetAudio(int id)
+        public async Task<ActionResult<Object>> GetAudio(int id)
         {
-            var audio = await _context.Audio.FindAsync(id);
+            var audio = _context.Audio
+                         .Include(c => c.Categoria)
+                         .Include(c => c.Creador)
+                         .Where(c => c.Id == id)
+                         .Select(item => new ContenidoDto.GetContenidoData
+                         {
+                             Id = item.Id,
+                             Username = item.Creador.Usuario.UserName,
+                             Titulo = item.Titulo,
+                             Descripcion = item.Descripcion,
+                             FechaCreacion = item.FechaCreacion.ToShortDateString(),
+                             CategoriaId = item.CategoriaId,
+                             CategoriaNombre = item.Categoria.Nombre,
+                             Texto = "",
+                             Largo = 0,
+                             Archivo = item.Archivo,
+                             ArchivoContenido = "",
+                             Calidad = item.Calidad,
+                             Duracion = item.Duracion,
+                             DuracionVideo = 0,
+                             Url = "",
+                             FechaInicio = "", 
+                             FechaFin = "",
+                         }).FirstOrDefault();
+
+            audio.ArchivoContenido = getAudioBlob(audio.Archivo);
 
             if (audio == null)
             {
@@ -76,12 +106,28 @@ namespace Crud.Controllers
         // POST: api/Audio
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Audio>> PostAudio(Audio audio)
+        public async Task<ActionResult<Audio>> PostAudio(ContenidoDto.ContenidoRegistro contenido)
         {
+            var user = await _identityService.GetUserInfo(HttpContext.User);
+            var audio = new Audio
+            {
+                CreadorId = user.Id,
+                Titulo = contenido.Titulo,
+                Descripcion = contenido.Descripcion,
+                FechaCreacion = DateTime.Now.Date,
+                Bloqueado = false,
+                DerechoAutor = contenido.DerechoAutor,
+                Archivo = contenido.Archivo,
+                Duracion = Convert.ToDecimal(contenido.Duracion),
+                Calidad = contenido.Calidad,
+                CategoriaId = contenido.CategoriaId,
+                TipoSuscripcionId = contenido.TipoSuscripcionId,
+            };
+
             _context.Audio.Add(audio);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetAudio", new { id = audio.Id }, audio);
+            return Ok(); //  CreatedAtAction("GetAudio", new { id = audio.Id }, audio);
         }
 
         // DELETE: api/Audio/5
@@ -103,6 +149,14 @@ namespace Crud.Controllers
         private bool AudioExists(int id)
         {
             return _context.Audio.Any(e => e.Id == id);
+        }
+
+        private string getAudioBlob(string filename)
+        {
+            byte[] contenido = FTPElastic.DownloadFileFTP(filename);
+            Regex regex = new Regex(".*\\.");
+            string type = regex.Replace(filename, string.Empty);
+            return "data:audio/" + type + ";base64," + Convert.ToBase64String(contenido);
         }
     }
 }

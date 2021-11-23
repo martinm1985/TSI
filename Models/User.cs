@@ -15,24 +15,33 @@ namespace Crud.Models
         [EmailAddress]
         public override string Email { get; set; }
 
-        public bool isAdministrador { get; set; }
-
         public string Name {get; set;}
-
+        public bool isAdministrador { get; set; }
         public string Surname {get; set;}
         public ICollection<UserCreador> Siguiendo { get; set; }
         public ICollection<Conversacion> Conversaciones { get; set; }
         public ICollection<MediosDePagos> MediosDePago { get; set; }
         public ICollection<SuscripcionUsuario> SuscripcionUsuario { get; set; }
-        public Creador Creador { get; set; }
+        public Creador Creador { get; set; }        
+
+        public UserData GetUserData(){
+            return new UserData{
+                Id = Id,
+                Email = Email,
+                Username = UserName,
+                isAdministrador = isAdministrador,
+                Name = Name,
+                Surname = Surname,
+            };
+        }
     }
 
     public class UserCreador
     {
         public string UserId { get; set; }
         public string CreadorId { get; set; }
-        public Creador Creador { get; set; }
-        public User User { get; set; }
+        //public Creador Creador { get; set; }
+        //public User User { get; set; }
     }
 
 
@@ -40,7 +49,7 @@ namespace Crud.Models
     {
         public string UserId { get; set; }
         public string Id { get; set; }
-        public virtual ICollection<UserCreador> Suscriptores { get; set; }
+        public virtual ICollection<UserCreador> Seguidores { get; set; } 
         public ICollection<Conversacion> ConversacionesSuscriptores { get; set; }
         public ICollection<TipoSuscripcion> TiposDeSuscripciones { get; set; }
         public ICollection<Contenido> Contenidos { get; set; }
@@ -55,20 +64,5 @@ namespace Crud.Models
         public string VideoYoutube { get; set; }
         public string MsjBienvenidaGral { get; set; }
 
-        public CreadorData GetCreadorData()
-        {
-            return new CreadorData
-            {
-                //Username = Usuario.UserName,
-                //Name = Usuario.Name,
-                //Surname = Usuario.Surname,
-                Descripcion = Descripcion,
-                Imagen = Imagen,
-                ImagePortada = ImagePortada,
-                Biografia = Biografia,
-                VideoYoutube = VideoYoutube,
-                MsjBienvenidaGral = MsjBienvenidaGral
-            };
-        }
     }
 }

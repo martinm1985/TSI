@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Crud.Models
 {
-    public class PagoPayPal : PayPal
+    public class PagoPayPal
     {
         public string IdPagoPaypal {get; set;}
         public string Invoice_id { get; set;}

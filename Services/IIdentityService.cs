@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Crud.DTOs;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Identity;
 
 namespace Crud.Services
 {
@@ -13,5 +14,8 @@ namespace Crud.Services
         Task<object> Login(string username, string email);
         Task<object> Refresh(string username, string email);
         Task<UserData> GetUserInfo(ClaimsPrincipal email);
+        Task<UserData> GetUserInfoById(string id);
+        Task<UserData?> MakeAdmin(string userId);
+        Task<UserData?> RemoveAdmin(string userId);
     }
 }

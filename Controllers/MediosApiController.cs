@@ -2,12 +2,17 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Crud.Models;
 using Crud.Data;
+using Crud.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
+using System.Threading.Tasks;
+using AutoMapper;
+using Crud.Services;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -17,12 +22,21 @@ namespace Api.Crud.Controllers
     [ApiController]
     public class MediosApiController : ControllerBase
     {
+        private readonly UserManager<User> _userManager;
 
         private readonly ApplicationDbContext _context;
 
-        public MediosApiController(ApplicationDbContext context)
+        private readonly IIdentityService _identityService;
+
+        private readonly IMapper _mapper;
+
+        public MediosApiController(ApplicationDbContext context, UserManager<User> userManager,
+            IMapper mapper, IIdentityService identityService)
         {
+            _identityService = identityService;
             _context = context;
+            _userManager = userManager;
+            _mapper = mapper;
         }
 
 
@@ -33,11 +47,121 @@ namespace Api.Crud.Controllers
         // GET: api/<ValuesController>
         [HttpGet]
         [Route("api/medios/getAll")]
-        public object Get()
+        public object GetMedios()
         {
             IEnumerable<MediosDePagos> listaMedios = _context.MediosDePagos;
 
             return JsonConvert.SerializeObject(listaMedios);
+        }
+
+        [HttpGet]
+        [Route("api/medios/getUserAll/{id}")]
+        public object GetMediosUser(string id)
+        {
+            var medios = from m in _context.MediosDePagos
+                            where m.UserId == id
+                            select m;
+
+            return JsonConvert.SerializeObject(medios);
+        }
+
+        [HttpGet]
+        [Route("api/medios/getEntidadesFinancieras")]
+        public ActionResult<IEnumerable<EntidadFinanciera>> GetEntidadesFinancieras()
+        {
+            return Ok(_context.EntidadesFinancieras.ToList());
+        }
+
+        [HttpGet]
+        [Route("api/entidades_financieras/getEntidadesFinancierasCredito")]
+        public object GetEntidadesFinancierasTarjetasCredito()
+        {
+            var entidades = from m in _context.EntidadesFinancieras
+                         where m.TarjetaCredito == true
+                         select m;
+
+            return JsonConvert.SerializeObject(entidades.ToList());
+        }
+
+        [HttpGet]
+        [Route("api/entidades_financieras/getEntidadesFinancierasDebito")]
+        public object GetEntidadesFinancierasTarjetasDebito()
+        {
+            var entidades = from m in _context.EntidadesFinancieras
+                            where m.TarjetaDebito == true
+                            select m;
+
+            return JsonConvert.SerializeObject(entidades);
+        }
+
+        [HttpGet]
+        [Route("api/entidades_financieras/getEntidadesFinancierasTarjeta")]
+        public object GetEntidadesFinancierasTarjetasCuenta()
+        {
+            var entidades = from m in _context.EntidadesFinancieras
+                            where m.Cuenta == true
+                            select m;
+
+            return JsonConvert.SerializeObject(entidades);
+        }
+
+        [HttpGet]
+        [Route("api/medios/getTarjetas")]
+        public async Task<ActionResult<IEnumerable<TarjetaResponse>>> GetTarjetasAsync()
+        {
+            var user = await _userManager.GetUserAsync(HttpContext.User);
+
+            //obtener el medio
+            var medios = _context.Tarjetas.Where(m => m.UserId == user.Id)
+                .Include(m => m.EntidadFinanciera);
+                       
+                         
+
+            if (medios == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(_mapper.Map<List<TarjetaResponse>>(await medios.ToListAsync()));
+        }
+
+        [HttpGet]
+        [Route("api/medios/getCuentasUser")]
+        public async Task<ActionResult<IEnumerable<CuentaResponse>>> GetCuentasUser()
+        {
+
+            var user = await _userManager.GetUserAsync(HttpContext.User);
+
+            //obtener el medio
+            var medios = _context.Cuentas.Where(m => m.UserId == user.Id)
+                .Include(m => m.EntidadFinanciera);
+
+            if (medios == null)
+            {
+                NotFound();
+            }
+
+            return Ok(_mapper.Map<List<CuentaResponse>>(await medios.ToListAsync()));
+        }
+
+        [HttpGet]
+        [Route("api/medios/getPayPalsUser")]
+        public async Task<ActionResult<IEnumerable<PayPal>>> GetPayPalUser()
+        {
+
+            var user = await _userManager.GetUserAsync(HttpContext.User);
+
+            //obtener el medio
+            var medios = from m in _context.Paypals
+                         where m.UserId == user.Id
+                         select m;
+
+            if (medios == null)
+            {
+                NotFound();
+            }
+
+            return Ok(medios.ToList());
         }
 
         // GET api/<ValuesController>/5
@@ -62,6 +186,27 @@ namespace Api.Crud.Controllers
             return JsonConvert.SerializeObject(medio);
         }
 
+        [HttpGet]
+        [Route("api/entidad_financiera/obtener/{id}")]
+        public object GetEntidadFinanciera(int id)
+        {
+
+            if (id == 0)
+            {
+                NotFound();
+            }
+
+            //obtener el medio
+            var entidad = _context.EntidadesFinancieras.Find(id);
+
+            if (entidad == null)
+            {
+                NotFound();
+            }
+
+            return JsonConvert.SerializeObject(entidad);
+        }
+
         // POST api/<ValuesController>
         [HttpPost]
         [Route("api/medios/actualizar")]
@@ -76,6 +221,50 @@ namespace Api.Crud.Controllers
 
         }
 
+        [HttpPost]
+        [Route("api/entidad_financiera/actualizar")]
+        public async Task<IActionResult> ActualizarEntidadFinancieraAsync(EntidadFinanciera entidad)
+        {
+            var entidadAux = from m in _context.EntidadesFinancieras
+                             where m.Nombre == entidad.Nombre &&
+                             m.Id != entidad.Id
+                             select m;
+
+            if (entidadAux.Count() > 0)
+            {
+                return BadRequest("Ya existe una entidad financiera con ese nombre");
+                
+            }
+
+            var entidadFinanciera = _context.EntidadesFinancieras.Find(entidad.Id);
+
+            if (ModelState.IsValid)
+            {
+
+                entidadFinanciera.Nombre = entidad.Nombre;
+                entidadFinanciera.Direccion = entidad.Direccion;
+                entidadFinanciera.Telefono = entidad.Telefono;
+                entidadFinanciera.TarjetaCredito = entidad.TarjetaCredito;
+                entidadFinanciera.TarjetaDebito = entidad.TarjetaDebito;
+                entidadFinanciera.Cuenta = entidad.Cuenta;
+
+                try
+                {
+                    _context.EntidadesFinancieras.Update(entidadFinanciera);
+                    await _context.SaveChangesAsync();
+                    return Ok();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    return BadRequest("Error al guardar");
+                }
+
+
+            }
+
+            return BadRequest("No coinciden los parámetros de entrada");
+        }
+
         // PUT api/<ValuesController>/5
         [HttpPut]
         [Route("api/medios/crear")]
@@ -88,6 +277,275 @@ namespace Api.Crud.Controllers
                 _context.SaveChanges();
                 Ok();
             }
+        }
+
+        // PUT api/<ValuesController>/5
+        [HttpPost]
+        [Route("api/entidad_financiera/crear")]
+        public IActionResult CrearEntidadFinanciera(EntidadFinancieraRequest entidadReq)
+        {
+            var entidadAux = from m in _context.EntidadesFinancieras
+                             where m.Nombre == entidadReq.Nombre
+                             select m;
+
+            if (entidadAux.Count() > 0)
+            {
+                return BadRequest("Ya existe una entidad financiera con ese nombre");
+                
+            }
+            else
+            {
+                if (ModelState.IsValid)
+                {
+                    var entidad = new EntidadFinanciera
+                    {
+                        Nombre = entidadReq.Nombre,
+                        Direccion = entidadReq.Direccion,
+                        Telefono = entidadReq.Telefono,
+                        TarjetaCredito = entidadReq.TarjetaCredito,
+                        TarjetaDebito = entidadReq.TarjetaDebito,
+                        Cuenta = entidadReq.Cuenta
+                    };
+
+                    _context.EntidadesFinancieras.Add(entidad);
+                    _context.SaveChanges();
+                    return Ok();
+                }
+
+                return BadRequest("No coinciden los parámetros de entrada");
+            }
+
+        }
+
+        // PUT api/<ValuesController>/5
+        [HttpPost]
+        [Route("api/medios/crear/Tarjeta")]
+        public IActionResult CrearTarjetaUsuario(TarjetaRequest tarjetaReq)
+        {
+
+            var tarjetaAux = from m in _context.Tarjetas
+                             where m.NumeroTarjeta == tarjetaReq.NumeroTarjeta &&
+                             m.IdEntidadFinanciera == tarjetaReq.IdEntidadFinanciera &&
+                             m.UserId == tarjetaReq.IdUser
+                             select m;
+
+            if (tarjetaAux.Count() > 0)
+            {
+                return BadRequest("Ya existe una tarjeta con ese número para esa entidad financiera");
+
+            }
+
+
+            if (ModelState.IsValid)
+            {
+                var tarjeta = new Tarjeta
+                {
+                    UserId = tarjetaReq.IdUser,
+                    Detalle = tarjetaReq.Detalle,
+                    IdEntidadFinanciera = tarjetaReq.IdEntidadFinanciera,
+                    EsCredito = tarjetaReq.EsCredito,
+                    NombreEnTarjeta = tarjetaReq.NombreEnTarjeta,
+                    NumeroTarjeta = tarjetaReq.NumeroTarjeta,
+                    Expiracion = tarjetaReq.Expiracion,
+                    FechaCreacion = DateTime.Now
+                };
+
+                _context.Tarjetas.Add(tarjeta);
+                _context.SaveChanges();
+                return Ok();
+            }
+
+            return BadRequest("No coinciden los parámetros de entrada");
+        }
+
+        [HttpPost]
+        [Route("api/medios/crear/Cuenta")]
+        public IActionResult CrearCuentaUsuario(CuentaRequest cuentaReq)
+        {
+            var cuentaAux = from m in _context.Cuentas
+                             where m.NumeroDeCuenta == cuentaReq.NumeroDeCuenta &&
+                             m.IdEntidadFinanciera == cuentaReq.IdEntidadFinanciera &&
+                             m.UserId == cuentaReq.IdUser
+                             select m;
+
+            if (cuentaAux.Count() > 0)
+            {
+                return BadRequest("Ya existe una cuenta con ese número para esa entidad financiera");
+
+            }
+
+            if (ModelState.IsValid)
+            {
+
+                var cuenta = new Cuenta
+                {
+                    UserId = cuentaReq.IdUser,
+                    Detalle = cuentaReq.Detalle,
+                    IdEntidadFinanciera = cuentaReq.IdEntidadFinanciera,
+                    NumeroDeCuenta = cuentaReq.NumeroDeCuenta,
+                    Sucursal = cuentaReq.Sucursal,
+                    FechaCreacion = DateTime.Now
+                };
+
+                _context.Cuentas.Add(cuenta);
+                _context.SaveChanges();
+                return Ok();
+            }
+
+            return BadRequest("No coinciden los parámetros de entrada");
+        }
+
+        [HttpPost]
+        [Route("api/medios/crear/PayPal")]
+        public IActionResult CrearPayPalUsuario(PayPalRequest paypalReq)
+        {
+
+            var cuentaAux = from m in _context.Paypals
+                            where m.CorreoPaypal == paypalReq.CorreoPaypal &&
+                            m.UserId == paypalReq.IdUser
+                            select m;
+
+            if (cuentaAux.Count() > 0)
+            {
+                return BadRequest("Ya existe una cuenta PayPal con ese correo");
+
+            }
+
+            if (ModelState.IsValid)
+            {
+                var paypal = new PayPal
+                {
+                    Detalle = paypalReq.Detalle,
+                    CorreoPaypal = paypalReq.CorreoPaypal,
+                    UserId = paypalReq.IdUser,
+                    FechaCreacion = DateTime.Now
+                };
+
+                _context.Paypals.Add(paypal);
+                _context.SaveChanges();
+                return Ok();
+            }
+
+            return BadRequest("No coinciden los parámetros de entrada");
+        }
+
+        // PUT api/<ValuesController>/5
+        [HttpPost]
+        [Route("api/medios/editar/Tarjeta")]
+        public async Task<IActionResult> EditarTarjetaUsuarioAsync(TarjetaRequest tarjetaReq)
+        {
+            var user = await _userManager.GetUserAsync(HttpContext.User);
+
+            var tarjetaAux = from m in _context.Tarjetas
+                             where m.NumeroTarjeta == tarjetaReq.NumeroTarjeta &&
+                             m.IdEntidadFinanciera == tarjetaReq.IdEntidadFinanciera &&
+                             m.Id != tarjetaReq.Id &&
+                             m.UserId == user.Id
+                             select m;
+
+            if (tarjetaAux.Count() > 0)
+            {
+                return BadRequest("Ya existe una tarjeta con ese número para esa entidad financiera");
+
+            }
+
+            var medio = _context.Tarjetas.Find(tarjetaReq.Id);
+
+            if (ModelState.IsValid)
+            {
+
+                medio.Detalle = tarjetaReq.Detalle;
+                medio.IdEntidadFinanciera = tarjetaReq.IdEntidadFinanciera;
+                medio.EsCredito = tarjetaReq.EsCredito;
+                medio.NombreEnTarjeta = tarjetaReq.NombreEnTarjeta;
+                medio.NumeroTarjeta = tarjetaReq.NumeroTarjeta;
+                medio.Expiracion = tarjetaReq.Expiracion;
+
+                try
+                {
+                    _context.MediosDePagos.Update(medio);
+                    await _context.SaveChangesAsync();
+                    return Ok();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    return BadRequest("Error al guardar");
+                }
+
+
+            }
+
+            return BadRequest("No coinciden los parámetros de entrada");
+        }
+
+        [HttpPost]
+        [Route("api/medios/editar/Cuenta")]
+        public async Task<IActionResult> EditarCuentaUsuarioAsync(CuentaRequest cuentaReq)
+        {
+            var user = await _userManager.GetUserAsync(HttpContext.User);
+
+            var cuentaAux = from m in _context.Cuentas
+                            where m.NumeroDeCuenta == cuentaReq.NumeroDeCuenta &&
+                            m.IdEntidadFinanciera == cuentaReq.IdEntidadFinanciera &&
+                            m.Id != cuentaReq.Id &&
+                            m.UserId == user.Id
+                            select m;
+
+            if (cuentaAux.Count() > 0)
+            {
+                return BadRequest("Ya existe una cuenta con ese número para esa entidad financiera");
+
+            }
+
+            var medio = _context.Cuentas.Find(cuentaReq.Id);
+
+            if (ModelState.IsValid)
+            {
+                medio.Detalle = cuentaReq.Detalle;
+                medio.IdEntidadFinanciera = cuentaReq.IdEntidadFinanciera;
+                medio.NumeroDeCuenta = cuentaReq.NumeroDeCuenta;
+                medio.Sucursal = cuentaReq.Sucursal;
+
+
+                _context.MediosDePagos.Update(medio);
+                await _context.SaveChangesAsync();
+                return Ok();
+            }
+
+            return BadRequest("No coinciden los parámetros de entrada");
+        }
+
+        [HttpPost]
+        [Route("api/medios/editar/PayPal")]
+        public async Task<IActionResult> EditarPayPalUsuarioAsync(PayPalRequest paypalReq)
+        {
+            var user = await _userManager.GetUserAsync(HttpContext.User);
+
+            var cuentaAux = from m in _context.Paypals
+                            where m.CorreoPaypal == paypalReq.CorreoPaypal &&
+                            m.Id != paypalReq.Id &&
+                            m.UserId == user.Id
+                            select m;
+
+            if (cuentaAux.Count() > 0)
+            {
+                return BadRequest("Ya existe una cuenta PayPal con ese correo");
+
+            }
+            var medio = _context.Paypals.Find(paypalReq.Id);
+
+            if (ModelState.IsValid)
+            {
+
+                medio.Detalle = paypalReq.Detalle;
+                medio.CorreoPaypal = paypalReq.CorreoPaypal;
+
+                _context.Paypals.Update(medio);
+                await _context.SaveChangesAsync();
+                return Ok();
+            }
+
+            return BadRequest("No coinciden los parámetros de entrada");
         }
 
         // DELETE api/<ValuesController>/5
@@ -113,10 +571,33 @@ namespace Api.Crud.Controllers
             Ok();
         }
 
+        // DELETE api/<ValuesController>/5
+        [HttpDelete]
+        [Route("api/entidad_financiera/borrar/{id}")]
+        public void BorrarEntidadFinanciera(int id)
+        {
+            if (id == 0)
+            {
+                NotFound();
+            }
+
+            //obtener la entidad
+            var entidad = _context.EntidadesFinancieras.Find(id);
+
+            if (entidad == null)
+            {
+                NotFound();
+            }
+
+            _context.EntidadesFinancieras.Remove(entidad);
+            _context.SaveChanges();
+            Ok();
+        }
+
         // Post api/<ValuesController>/StringSearch
         [HttpPost]
         [Route("api/medios/buscar/{searchString}")]
-        public object Busqueda(String searchString)
+        public object BusquedaMedioDePago(string searchString)
         {
             var medios = from m in _context.MediosDePagos
                          select m;
@@ -131,72 +612,19 @@ namespace Api.Crud.Controllers
         }
 
         // Post api/<ValuesController>/StringSearch
-        [HttpGet]
-        [Route("api/medios/cargaDiaria")]
-        public List<MediosCreados> cargaDiaria()
-        {
-            var fechasMedios = from t in _context.MediosDePagos
-                               orderby t.FechaCreacion ascending
-                               select t.FechaCreacion;
-
-
-            List<MediosCreados> carga = new List<MediosCreados>();
-
-            SortedSet<DateTime> fechas = new SortedSet<DateTime>();
-            //int cantidad;
-
-            foreach (var m in fechasMedios)
-            {
-                fechas.Add(new DateTime(m.Year,m.Month,m.Day));
-            }
-
-            foreach (var f in fechas)
-            {
-                var sqlCant = from t in _context.MediosDePagos
-                              where (t.FechaCreacion >= f && t.FechaCreacion < f.AddDays(1))
-                              orderby t.FechaCreacion ascending
-                              select t.FechaCreacion;
-
-                MediosCreados nuevo = new MediosCreados(f.ToString("dd/MM/yy"), sqlCant.Count());
-                carga.Add(nuevo);
-            }
-
-            return carga;
-
-        }
-
         [HttpPost]
-        [Route("api/medios/cargaPorFechas/")]
-        public List<MediosCreados> cargaPorFechas(DateTime FechaInicial, DateTime FechaFinal)
+        [Route("api/entidad_financiera/buscar/{searchString}")]
+        public object BusquedaEntidadFinanciera(string searchString)
         {
-            var fechasMedios = from t in _context.MediosDePagos
-                               where (t.FechaCreacion >= FechaInicial && t.FechaCreacion <= FechaFinal.AddDays(1))
-                               orderby t.FechaCreacion ascending
-                               select t.FechaCreacion;
+            var entidades = from m in _context.EntidadesFinancieras
+                         select m;
 
-
-            List<MediosCreados> carga = new List<MediosCreados>();
-
-            SortedSet<DateTime> fechas = new SortedSet<DateTime>();
-            //int cantidad;
-
-            foreach (var m in fechasMedios)
+            if (!string.IsNullOrEmpty(searchString))
             {
-                fechas.Add(new DateTime(m.Year, m.Month, m.Day));
+                entidades = entidades.Where(s => s.Nombre.Contains(searchString));
             }
 
-            foreach (var f in fechas)
-            {
-                var sqlCant = from t in _context.MediosDePagos
-                              where (t.FechaCreacion >= f && t.FechaCreacion < f.AddDays(1))
-                              orderby t.FechaCreacion ascending
-                              select t.FechaCreacion;
-
-                MediosCreados nuevo = new MediosCreados(f.ToString("dd/MM/yy"), sqlCant.Count());
-                carga.Add(nuevo);
-            }
-
-            return carga;
+            return JsonConvert.SerializeObject(entidades);
 
         }
     }

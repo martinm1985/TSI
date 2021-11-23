@@ -51,7 +51,6 @@
                     <tr>
                         <td>@Html.DisplayNameFor(m => m.Id) </td>
                         <td>@Html.DisplayNameFor(m => m.Detalle) </td>
-                        <td>@Html.DisplayNameFor(m => m.FechaValidez) </td>
                         <td>@Html.DisplayNameFor(m => m.FechaCreacion) </td>
                         <td>Acciones</td>
                     </tr>
@@ -62,7 +61,6 @@
                     <tr>
                         <td>@item.Id</td>
                         <td>@item.Detalle</td>
-                        <td>@item.FechaValidez.ToString("dd-MM-yyyy")</td>
                         <td>@item.FechaCreacion</td>
                         <td>
                             <a asp-controller="MediosDePagos" asp-action="Edit" asp-route-id="@item.Id" class="btn btn-warning">Editar</a>

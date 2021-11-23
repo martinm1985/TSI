@@ -1,4 +1,5 @@
 ﻿using Crud.DTOs;
+using Crud.Models;
 using Crud.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -20,9 +21,13 @@ namespace Crud.Controllers
     {
         private readonly IIdentityService _identityService;
 
-        public IdentityController(IIdentityService identityService)
+
+        private readonly UserManager<User> _userManager;
+
+        public IdentityController(IIdentityService identityService, UserManager<User> userManager)
         {
             this._identityService = identityService;
+            _userManager = userManager;
         }
 
         [HttpPost("register")]
@@ -37,7 +42,7 @@ namespace Crud.Controllers
             }
 
             return Ok(res);
-            
+
         }
 
         [HttpPost("login")]
@@ -66,12 +71,43 @@ namespace Crud.Controllers
             return Ok(res);
         }
 
+        [HttpPost("make_user_admin")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme ,Policy = "AdminAuthorization")]
+        public async Task<ActionResult<UserData>> MakeUserAdmin(string userId)
+        {
+            var admin = await _userManager.GetUserAsync(HttpContext.User);
+
+            if (admin.Id == userId) {
+                 return BadRequest("Un usuario no puede hacerse admin a si mismo");
+             }
+
+            var res = await _identityService.MakeAdmin(userId);
+
+            return res != null ? Ok(res) : BadRequest("No existe un usuario con esa id");
+        }
+
+        [HttpPost("remove_admin_user")]
+        [Authorize(Policy = "AdminAuthorization")]
+        public async Task<ActionResult<UserData>> RemoveAdminUser(string userId)
+        {
+            var admin = await _userManager.GetUserAsync(HttpContext.User);
+
+            if (admin.Id == userId) {
+                 return BadRequest("Un usuario no puede sacarse sus permisos de admin");
+             }
+
+
+            var res = await _identityService.RemoveAdmin(userId);
+
+            return res != null ? Ok(res) : BadRequest("No existe un usuario con esa id");;
+        }
+
         [HttpGet]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         public async Task<IActionResult> Identity()
         {
             var user = await _identityService.GetUserInfo(HttpContext.User);
-            
+
             if (user == null)
             {
                 return BadRequest(HttpContext.User.FindFirst(c => c.Type == ClaimTypes.NameIdentifier).Value);
