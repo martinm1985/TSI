@@ -9,6 +9,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
 using System.Text;
+using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 using AutoMapper;
 
@@ -22,15 +23,17 @@ namespace Crud.Services
         private readonly TokenValidationParameters _tokenValidationParameter;
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
+        private readonly RoleManager<IdentityRole> _roleManager;
 
 
-        public IdentityService (UserManager<User> userManager, JWTSettigs jwtSetting, TokenValidationParameters tokenValidationParameter, ApplicationDbContext context, IMapper mapper ) 
+        public IdentityService (RoleManager<IdentityRole>  roleManager, UserManager<User> userManager, JWTSettigs jwtSetting, TokenValidationParameters tokenValidationParameter, ApplicationDbContext context, IMapper mapper )
         {
             _userManager = userManager;
             _jwtSetting = jwtSetting;
             _tokenValidationParameter = tokenValidationParameter;
             _context = context;
             _mapper = mapper;
+            _roleManager = roleManager;
         }
 
         public async Task<object> RegisterUser(string username, string email, string password, string name, string surname)
@@ -64,6 +67,7 @@ namespace Crud.Services
                 UserName = username,
                 Name = name,
                 Surname = surname,
+
             };
 
             var createdUser = await _userManager.CreateAsync(newUser, password);
@@ -76,21 +80,6 @@ namespace Crud.Services
                 };
             }
 
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(_jwtSetting.Secret);
-            var descriptor = new SecurityTokenDescriptor
-            {
-                Subject = new ClaimsIdentity(claims: new[] {
-                    new Claim(type: JwtRegisteredClaimNames.Sub, value: newUser.UserName),
-                    new Claim(type: JwtRegisteredClaimNames.Email, value: newUser.Email),
-                    new Claim(type: JwtRegisteredClaimNames.Jti, value: Guid.NewGuid().ToString()),
-                }),
-                Expires = DateTime.UtcNow.AddHours(2),
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), algorithm: SecurityAlgorithms.HmacSha256Signature)
-            };
-
-            var token = tokenHandler.CreateToken(descriptor);
-
             return await GetTokenResponse(newUser);
         }
 
@@ -98,14 +87,22 @@ namespace Crud.Services
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(_jwtSetting.Secret);
-            var descriptor = new SecurityTokenDescriptor
-            {
-                Subject = new ClaimsIdentity(claims: new[] {
+
+            var roles = await _userManager.GetRolesAsync(user);
+
+
+            var claimsIdentity = new ClaimsIdentity(claims: new[] {
                     new Claim(type: JwtRegisteredClaimNames.Sub, value: user.Id.ToString()),
                     new Claim(type: JwtRegisteredClaimNames.Email, value: user.Email),
                     new Claim(type: JwtRegisteredClaimNames.Jti, value: Guid.NewGuid().ToString()),
                     new Claim(type: ClaimTypes.NameIdentifier, value: user.UserName)
-                }),
+            });
+
+            claimsIdentity.AddClaims(roles.Select(role => new Claim(ClaimTypes.Role, role)));
+
+            var descriptor = new SecurityTokenDescriptor
+            {
+                Subject = claimsIdentity,
                 Expires = DateTime.UtcNow.AddDays(1),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), algorithm: SecurityAlgorithms.HmacSha256Signature)
             };
@@ -135,7 +132,15 @@ namespace Crud.Services
 
             return new ResponseRegistrationSuccess
             {
-                User = _mapper.Map<UserData>(user),
+                User =  _mapper.Map<UserData>(
+                await _context.Usuarios
+                .Where(c => c.Id == user.Id)
+                .Include(s => s.Creador)
+                .Include(c => c.Creador.Categoria1)
+                .Include(c => c.Creador.Categoria2)
+                .Include(c => c.Creador.TiposDeSuscripciones)
+                .FirstOrDefaultAsync()
+                ),
                 Token = tokenHandler.WriteToken(token),
                 RefreshToken = newrefreshToken.Token,
             };
@@ -174,7 +179,7 @@ namespace Crud.Services
             {
                 return new ResponseFailure
                 {
-                    Error =  "Email/Password combination not correct" 
+                    Error =  "Email/Password combination not correct"
                 };
             }
 
@@ -215,9 +220,9 @@ namespace Crud.Services
             {
                 return new ResponseFailure
                 {
-                    Error = "Refresh token invalid" 
+                    Error = "Refresh token invalid"
                 };
-            } 
+            }
 
             if (validatedToken == null)
             {
@@ -247,13 +252,54 @@ namespace Crud.Services
         public async Task<UserData> GetUserInfo(ClaimsPrincipal claim) {
 
             var user = await _userManager.GetUserAsync(claim);
-            _context.Entry(user).Reference(p => p.Creador).Load();
 
             if (user == null) {
                 return null;
             }
+            _context.Entry(user).Reference(p => p.Creador).Load();
 
             return _mapper.Map<UserData>(user);
+        }
+
+        public async Task<UserData> GetUserInfoById(string id) {
+
+            var user = await _userManager.FindByIdAsync(id);
+
+            if (user == null) {
+                return null;
+            }
+            _context.Entry(user).Reference(p => p.Creador).Load();
+
+
+            return _mapper.Map<UserData>(user);
+        }
+
+        public async Task<UserData?> MakeAdmin(string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null) {
+                return null;
+            }
+
+            user.isAdministrador = true;
+            await _userManager.UpdateAsync(user);
+
+            return await this.GetUserInfoById(userId);
+
+        }
+
+        public async Task<UserData?> RemoveAdmin(string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null) {
+                return null;
+            }
+
+            user.isAdministrador = false;
+            await _userManager.UpdateAsync(user);
+
+            return await this.GetUserInfoById(userId);
+
         }
     }
 }

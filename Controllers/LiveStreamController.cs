@@ -7,6 +7,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Crud.Data;
 using Crud.Models;
+using Crud.DTOs;
+using Crud.Services;
+
 
 namespace Crud.Controllers
 {
@@ -15,9 +18,11 @@ namespace Crud.Controllers
     public class LiveStreamController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IIdentityService _identityService;
 
-        public LiveStreamController(ApplicationDbContext context)
+        public LiveStreamController(ApplicationDbContext context, IIdentityService identityService)
         {
+            _identityService = identityService;
             _context = context;
         }
 
@@ -30,9 +35,31 @@ namespace Crud.Controllers
 
         // GET: api/LiveStream/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<LiveStream>> GetLiveStream(int id)
+        public async Task<ActionResult<Object>> GetLiveStream(int id)
         {
-            var liveStream = await _context.LiveStream.FindAsync(id);
+            var liveStream = _context.LiveStream
+                         .Include(c => c.Categoria)
+                         .Include(c => c.Creador)
+                         .Where(c => c.Id == id)
+                         .Select(item => new
+                         {
+                             id = item.Id,
+                             username = item.Creador.Usuario.UserName,
+                             titulo = item.Titulo,
+                             descripcion = item.Descripcion,
+                             fechaCreacion = item.FechaCreacion.ToShortDateString(),
+                             categoriaId = item.CategoriaId,
+                             categoriaNombre = item.Categoria.Nombre,
+                             texto = "",
+                             largo = 0,
+                             archivo = "",
+                             calidad = "",
+                             duracion = 0,
+                             duracionVideo = 0,
+                             url = "",
+                             fechaInicio = item.FechaInicio.ToShortDateString(),
+                             fechaFin = item.FechaFin.ToShortDateString(),
+                         }).FirstOrDefault();
 
             if (liveStream == null)
             {
@@ -40,6 +67,7 @@ namespace Crud.Controllers
             }
 
             return liveStream;
+
         }
 
         // PUT: api/LiveStream/5
@@ -76,12 +104,29 @@ namespace Crud.Controllers
         // POST: api/LiveStream
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<LiveStream>> PostLiveStream(LiveStream liveStream)
+        public async Task<ActionResult<LiveStream>> PostLiveStream(ContenidoDto.ContenidoRegistro contenido)
         {
+            var user = await _identityService.GetUserInfo(HttpContext.User);
+            var liveStream = new LiveStream
+            {
+                CreadorId = user.Id,
+                Titulo = contenido.Titulo,
+                Descripcion = contenido.Descripcion,
+                FechaCreacion = DateTime.Now.Date,
+                Bloqueado = false,
+                DerechoAutor = contenido.DerechoAutor,
+                //Archivo = contenido.Archivo,
+                //Calidad = contenido.Calidad,
+                CategoriaId = contenido.CategoriaId,
+                TipoSuscripcionId = contenido.TipoSuscripcionId,
+                FechaInicio = contenido.FechaInicio,
+                FechaFin = contenido.FechaFin
+            };
+
             _context.LiveStream.Add(liveStream);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetLiveStream", new { id = liveStream.Id }, liveStream);
+            return Ok();
         }
 
         // DELETE: api/LiveStream/5

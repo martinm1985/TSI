@@ -1,7 +1,7 @@
 ﻿using System;
 namespace Crud.Models
 {
-    public class SuscripcionPayPal: PayPal
+    public class SuscripcionPayPal
     {
         public string IdSuscripcionPayPal { get; set; }
         public string IdPlanPayPal { get; set; }

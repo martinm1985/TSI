@@ -6,7 +6,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Crud.Data;
+using Crud.DTOs;
 using Crud.Models;
+using Crud.Services;
 
 namespace Crud.Controllers
 {
@@ -15,9 +17,12 @@ namespace Crud.Controllers
     public class TextoController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IIdentityService _identityService;
 
-        public TextoController(ApplicationDbContext context)
+
+        public TextoController(ApplicationDbContext context, IIdentityService identityService)
         {
+            _identityService = identityService;
             _context = context;
         }
 
@@ -30,9 +35,31 @@ namespace Crud.Controllers
 
         // GET: api/Texto/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Texto>> GetTexto(int id)
+        public async Task<ActionResult<Object>> GetTexto(int id)
         {
-            var texto = await _context.Texto.FindAsync(id);
+            var texto = _context.Texto
+                         .Include(c => c.Categoria)
+                         .Include(c => c.Creador)
+                         .Where(c => c.Id == id)
+                         .Select(item => new
+                         {
+                             id = item.Id,
+                             username = item.Creador.Usuario.UserName,
+                             titulo = item.Titulo,
+                             descripcion = item.Descripcion,
+                             fechaCreacion = item.FechaCreacion.ToShortDateString(),
+                             categoriaId = item.CategoriaId,
+                             categoriaNombre = item.Categoria.Nombre,
+                             texto = item.Html,
+                             largo = item.Largo,
+                             archivo = "",
+                             calidad = "",
+                             duracion = 0,
+                             duracionVideo = 0,
+                             url = "",
+                             fechaInicio = "",
+                             fechaFin = "",
+                         }).FirstOrDefault();
 
             if (texto == null)
             {
@@ -74,14 +101,30 @@ namespace Crud.Controllers
         }
 
         // POST: api/Texto
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Texto>> PostTexto(Texto texto)
+        public async Task<ActionResult<Texto>> PostTexto(ContenidoDto.ContenidoRegistro contenido)
         {
+            var user = await _identityService.GetUserInfo(HttpContext.User);
+            var texto = new Texto
+            {
+                CreadorId = user.Id,
+                Titulo = contenido.Titulo,
+                Descripcion = contenido.Descripcion,
+                FechaCreacion = DateTime.Now.Date,
+                Bloqueado = false,
+                DerechoAutor = contenido.DerechoAutor,
+                //Archivo = contenido.Archivo,
+                //Calidad = contenido.Calidad,
+                CategoriaId = contenido.CategoriaId,
+                TipoSuscripcionId = contenido.TipoSuscripcionId,
+                Largo = contenido.Largo,
+                Html = contenido.Texto,
+            };
+
             _context.Texto.Add(texto);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetTexto", new { id = texto.Id }, texto);
+            return Ok();
         }
 
         // DELETE: api/Texto/5

@@ -6,7 +6,11 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Crud.Data;
+using Crud.DTOs;
 using Crud.Models;
+using Crud.Services;
+using static Crud.DTOs.SuscripcionDto;
+using AutoMapper;
 
 namespace Crud.Controllers
 {
@@ -15,10 +19,14 @@ namespace Crud.Controllers
     public class TipoSuscripcionesController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IIdentityService _identityService;
+        private readonly IMapper _mapper;
 
-        public TipoSuscripcionesController(ApplicationDbContext context)
+        public TipoSuscripcionesController(ApplicationDbContext context, IIdentityService identityService, IMapper mapper)
         {
+            _identityService = identityService;
             _context = context;
+            _mapper = mapper;
         }
 
         // GET: api/TipoSuscripciones
@@ -26,6 +34,53 @@ namespace Crud.Controllers
         public async Task<ActionResult<IEnumerable<TipoSuscripcion>>> GetTipoSuscripcion()
         {
             return await _context.TipoSuscripcion.ToListAsync();
+        }
+
+        // GET: api/TipoSuscripcionesDefecto
+        [HttpGet("defecto")]
+        public async Task<ActionResult<IEnumerable<Object>>> GetTipoSuscripcionDefecto()
+        {
+
+            var susc = _context.Parametros
+                        .Where(p => (p.Nombre == "SUSCDEFECTO1" || p.Nombre == "SUSCDEFECTO2" || p.Nombre == "SUSCDEFECTO3"))
+                        .Select(p => int.Parse(p.Valor)).ToList();
+
+            if (susc == null)
+            {
+                return BadRequest();
+            }
+            
+            var result = from t in _context.TipoSuscripcion
+                         where susc.Contains(t.Id)
+                         select t; 
+            
+            return result.ToList();
+        }
+
+        // GET: api/TipoSuscripcionesCreador
+        [HttpGet("creador")]
+        public async Task<ActionResult<IEnumerable<Object>>> GetTipoSuscripcionCreador()
+        {
+            try
+            {
+                var user = await _identityService.GetUserInfo(HttpContext.User);
+
+                if (user != null)
+                {
+                    var tipoSuscripcion = _mapper.Map<List<TipoSuscripcionDto>>(
+                         await _context.TipoSuscripcion
+                                .Where(t => t.CreadorId == user.Id)
+                                .Where(t => t.Activo).ToListAsync());
+
+                    return Ok(tipoSuscripcion);
+                }
+            }
+            catch
+            {
+                return null;
+            }
+            return null;
+           
         }
 
         // GET: api/TipoSuscripciones/5
@@ -45,13 +100,23 @@ namespace Crud.Controllers
         // PUT: api/TipoSuscripciones/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutTipoSuscripcion(int id, TipoSuscripcion tipoSuscripcion)
+        public async Task<IActionResult> PutTipoSuscripcion(int id, SuscripcionDto.TipoSuscripcionDto request)
         {
-            if (id != tipoSuscripcion.Id)
+            if (id != request.Id)
             {
                 return BadRequest();
             }
 
+            var tipoSuscripcion = _context.TipoSuscripcion.Find(id);
+            tipoSuscripcion.Nombre = request.Nombre;
+            tipoSuscripcion.Precio = request.Precio;
+            tipoSuscripcion.Activo = request.Activo;
+            tipoSuscripcion.Beneficios = request.Beneficios;
+            tipoSuscripcion.Imagen = request.Imagen;
+            tipoSuscripcion.MensajeBienvenida = request.MensajeBienvenida;
+            tipoSuscripcion.MensajeriaActiva = request.MensajeriaActiva;
+            tipoSuscripcion.IncluyeTipoSuscrId = request.IncluyeTipoSuscrId;
+            tipoSuscripcion.VideoBienvenida = request.VideoBienvenida;
             _context.Entry(tipoSuscripcion).State = EntityState.Modified;
 
             try

@@ -25,7 +25,7 @@ namespace Crud.Models
         public bool Bloqueado { get; set; }
 
         public string DerechoAutor { get; set; }
-        public byte[] Archivo { get; set; }
+        public string Archivo { get; set; }
         public string Calidad { get; set; }
         public int? CategoriaId { get; set; }
         [ForeignKey("CategoriaId")]

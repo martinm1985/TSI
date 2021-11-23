@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using static Crud.DTOs.SuscripcionDto;
 
 namespace Crud.DTOs
 {
@@ -43,7 +44,7 @@ namespace Crud.DTOs
 
     public class UserData
     {
-        public string Id {get; set;}
+        public string Id { get; set; }
         public string Name { get; set; }
         public string Email { get; set; }
         public bool isAdministrador { get; set; }
@@ -66,18 +67,35 @@ namespace Crud.DTOs
         public string UserId { get; set; }
 
     }
+
+    public record CreadorBasicData
+    {
+        public string Id { get; set; }
+        public string Username { get; set; }
+        public string Imagen { get; set; }
+        public string Descripcion { get; set; }
+        public Categoria Categoria1 { get; set; }
+        public Categoria Categoria2 { get; set; }
+
+    }
+
     public record CreadorData
     {
-        public string Name { get; set; }
-        public string Username { get; set; }
-        public string Surname { get; set; }
+        public string Id { get; set; }
         public string Descripcion { get; set; }
         public string Imagen { get; set; }
         public string ImagePortada { get; set; }
         public string Biografia { get; set; }
         public string VideoYoutube { get; set; }
         public string MsjBienvenidaGral { get; set; }
-        public string[] Categorias { get; set; }
+        public Categoria[] Categorias { get; set; }
+        public ICollection<TipoSuscripcionDto> TiposDeSuscripciones {  get;set; }
+        public bool esSeguido { get; set; }
+        public int Categoria1Id { get; set; }
+        public int Categoria2Id { get; set; }
+        public Categoria Categoria1 { get; set; }
+        public Categoria Categoria2 { get; set; }
+
 
     }
 

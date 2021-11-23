@@ -42,8 +42,8 @@ namespace Crud.Migrations
                         .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-                    b.Property<byte[]>("Archivo")
-                        .HasColumnType("varbinary(max)");
+                    b.Property<string>("Archivo")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("Bloqueado")
                         .HasColumnType("bit");
@@ -160,6 +160,36 @@ namespace Crud.Migrations
                     b.ToTable("Creadores");
                 });
 
+            modelBuilder.Entity("Crud.Models.EntidadFinanciera", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<bool>("Cuenta")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Direccion")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Nombre")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("TarjetaCredito")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("TarjetaDebito")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Telefono")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("EntidadesFinancieras");
+                });
+
             modelBuilder.Entity("Crud.Models.Finanza", b =>
                 {
                     b.Property<int>("FinanzaId")
@@ -255,16 +285,15 @@ namespace Crud.Migrations
                     b.Property<DateTime>("FechaCreacion")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime>("FechaValidez")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("IdPago")
+                    b.Property<int>("IdEntidadFinanciera")
                         .HasColumnType("int");
 
                     b.Property<string>("UserId")
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("IdEntidadFinanciera");
 
                     b.HasIndex("UserId");
 
@@ -344,6 +373,23 @@ namespace Crud.Migrations
                     b.HasKey("Nombre");
 
                     b.ToTable("Parametros");
+
+                    b.HasData(
+                        new
+                        {
+                            Nombre = "SUSCDEFECTO1",
+                            Valor = "1"
+                        },
+                        new
+                        {
+                            Nombre = "SUSCDEFECTO2",
+                            Valor = "2"
+                        },
+                        new
+                        {
+                            Nombre = "SUSCDEFECTO3",
+                            Valor = "3"
+                        });
                 });
 
             modelBuilder.Entity("Crud.Models.RefreshToken", b =>
@@ -453,6 +499,46 @@ namespace Crud.Migrations
                     b.HasIndex("IncluyeTipoSuscrId");
 
                     b.ToTable("TipoSuscripcion");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Activo = true,
+                            Beneficios = "Acceso a un nuevo contenido por semana;;",
+                            Imagen = "TODO",
+                            MensajeBienvenida = "",
+                            MensajeriaActiva = false,
+                            Nombre = "Basico",
+                            Precio = 1f,
+                            VideoBienvenida = false
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Activo = true,
+                            Beneficios = "Acceso a todo el contenido subido;;",
+                            Imagen = "TODO",
+                            IncluyeTipoSuscrId = 1,
+                            MensajeBienvenida = "",
+                            MensajeriaActiva = false,
+                            Nombre = "Estandar",
+                            Precio = 5f,
+                            VideoBienvenida = false
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Activo = true,
+                            Beneficios = "Todo lo que incluye el estandar;;CHATEA CONMIGO;;",
+                            Imagen = "TODO",
+                            IncluyeTipoSuscrId = 2,
+                            MensajeBienvenida = "",
+                            MensajeriaActiva = true,
+                            Nombre = "Estandar",
+                            Precio = 10f,
+                            VideoBienvenida = false
+                        });
                 });
 
             modelBuilder.Entity("Crud.Models.User", b =>
@@ -528,6 +614,27 @@ namespace Crud.Migrations
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
 
                     b.ToTable("AspNetUsers");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = "1",
+                            AccessFailedCount = 0,
+                            ConcurrencyStamp = "a5d5104a-5729-4252-af6c-c4f496a01984",
+                            Email = "creadoresuyadmin@gmail.com",
+                            EmailConfirmed = false,
+                            LockoutEnabled = false,
+                            Name = "Creadores",
+                            NormalizedEmail = "CREADORESUYADMIN@GMAIL.COM",
+                            NormalizedUserName = "CREADORESUY",
+                            PasswordHash = "AQAAAAEAACcQAAAAENXiWf5/FvjGCDCMQAbtOIvwWx4kxJyQueKjhUIx9lq5QjJ4mEMa/bolJgXkzPmmqQ==",
+                            PhoneNumberConfirmed = false,
+                            SecurityStamp = "bbeb372a-2d7b-4dd0-99d6-afa6c5f71913",
+                            Surname = "UY",
+                            TwoFactorEnabled = false,
+                            UserName = "CreadoresUY",
+                            isAdministrador = true
+                        });
                 });
 
             modelBuilder.Entity("Crud.Models.UserCreador", b =>
@@ -570,6 +677,15 @@ namespace Crud.Migrations
                         .HasFilter("[NormalizedName] IS NOT NULL");
 
                     b.ToTable("AspNetRoles");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = "1",
+                            ConcurrencyStamp = "e64e6abd-a209-4078-a19c-38989a52f7ed",
+                            Name = "Administrator",
+                            NormalizedName = "ADMINISTRATOR"
+                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -655,6 +771,13 @@ namespace Crud.Migrations
                     b.HasIndex("RoleId");
 
                     b.ToTable("AspNetUserRoles");
+
+                    b.HasData(
+                        new
+                        {
+                            UserId = "1",
+                            RoleId = "1"
+                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
@@ -680,8 +803,8 @@ namespace Crud.Migrations
                 {
                     b.HasBaseType("Crud.Models.Contenido");
 
-                    b.Property<int>("Duracion")
-                        .HasColumnType("int");
+                    b.Property<decimal>("Duracion")
+                        .HasColumnType("decimal(18,2)");
 
                     b.HasDiscriminator().HasValue("Audio");
                 });
@@ -733,83 +856,56 @@ namespace Crud.Migrations
                 {
                     b.HasBaseType("Crud.Models.Contenido");
 
-                    b.Property<int>("Duracion")
-                        .HasColumnType("int")
+                    b.Property<decimal>("Duracion")
+                        .HasColumnType("decimal(18,2)")
                         .HasColumnName("Video_Duracion");
 
                     b.HasDiscriminator().HasValue("Video");
                 });
 
-            modelBuilder.Entity("Crud.Models.PagoPayPal", b =>
+            modelBuilder.Entity("Crud.Models.Cuenta", b =>
                 {
                     b.HasBaseType("Crud.Models.MediosDePagos");
 
-                    b.Property<string>("ClientIdPayPal")
-                        .ValueGeneratedOnUpdateSometimes()
+                    b.Property<string>("NumeroDeCuenta")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("CorreoPaypal")
-                        .ValueGeneratedOnUpdateSometimes()
+                    b.Property<string>("Sucursal")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Estado")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("FechaTransaccion")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("IdAutorizacion")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("IdCaptura")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("IdPagoPaypal")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("IdReembolso")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Invoice_id")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasDiscriminator().HasValue("PagoPayPal");
+                    b.HasDiscriminator().HasValue("Cuenta");
                 });
 
-            modelBuilder.Entity("Crud.Models.SuscripcionPayPal", b =>
+            modelBuilder.Entity("Crud.Models.PayPal", b =>
                 {
                     b.HasBaseType("Crud.Models.MediosDePagos");
 
-                    b.Property<string>("CantidadFrequencia")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("ClientIdPayPal")
-                        .ValueGeneratedOnUpdateSometimes()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("CorreoPaypal")
-                        .ValueGeneratedOnUpdateSometimes()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("EstadoSuscripcionPayPal")
-                        .HasColumnType("nvarchar(max)");
+                    b.HasDiscriminator().HasValue("PayPal");
+                });
 
-                    b.Property<DateTime>("FechaInicioSuscripcion")
+            modelBuilder.Entity("Crud.Models.Tarjeta", b =>
+                {
+                    b.HasBaseType("Crud.Models.MediosDePagos");
+
+                    b.Property<bool>("EsCredito")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("Expiracion")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("Frequencia")
+                    b.Property<string>("NombreEnTarjeta")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("IdPlanPayPal")
+                    b.Property<string>("NumeroTarjeta")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("IdSuscripcionPayPal")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("NombrePlan")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasDiscriminator().HasValue("SuscripcionPayPal");
+                    b.HasDiscriminator().HasValue("Tarjeta");
                 });
 
             modelBuilder.Entity("Crud.Models.Contenido", b =>
@@ -889,9 +985,17 @@ namespace Crud.Migrations
 
             modelBuilder.Entity("Crud.Models.MediosDePagos", b =>
                 {
+                    b.HasOne("Crud.Models.EntidadFinanciera", "EntidadFinanciera")
+                        .WithMany()
+                        .HasForeignKey("IdEntidadFinanciera")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("Crud.Models.User", null)
                         .WithMany("MediosDePago")
                         .HasForeignKey("UserId");
+
+                    b.Navigation("EntidadFinanciera");
                 });
 
             modelBuilder.Entity("Crud.Models.Mensaje", b =>
@@ -954,21 +1058,17 @@ namespace Crud.Migrations
 
             modelBuilder.Entity("Crud.Models.UserCreador", b =>
                 {
-                    b.HasOne("Crud.Models.Creador", "Creador")
-                        .WithMany("Suscriptores")
+                    b.HasOne("Crud.Models.Creador", null)
+                        .WithMany("Seguidores")
                         .HasForeignKey("CreadorId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Crud.Models.User", "User")
+                    b.HasOne("Crud.Models.User", null)
                         .WithMany("Siguiendo")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Creador");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -1040,7 +1140,7 @@ namespace Crud.Migrations
 
                     b.Navigation("Finanzas");
 
-                    b.Navigation("Suscriptores");
+                    b.Navigation("Seguidores");
 
                     b.Navigation("TiposDeSuscripciones");
                 });

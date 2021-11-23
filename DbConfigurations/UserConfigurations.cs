@@ -27,8 +27,8 @@ namespace Crud.DbConfigurations
     {
         public void Configure(EntityTypeBuilder<UserCreador> builder)
         {
-            builder.HasOne<User>(x => x.User);
-            builder.HasOne<Creador>(x => x.Creador);
+            //builder.HasOne<User>(x => x.User);
+            //builder.HasOne<Creador>(x => x.Creador);
             builder.HasKey(x => new { x.UserId, x.CreadorId });
         }
     }

@@ -17,17 +17,14 @@ namespace Crud.Models
         [Display(Name = "Detalle")]
         public string Detalle { get; set; }
 
-
-        [Required(ErrorMessage = "se debe agregar una fecha")]
-        [DataType(DataType.Date)]
-        [Display(Name = "Fecha de Validez")]
-        public DateTime FechaValidez { get; set; }
-
-
         [Display(Name = "Fecha de Creación")]
         public DateTime FechaCreacion { get; set; }
 
-        [ForeignKey("Pago")]
-        public int IdPago { get; set; }
+        public string UserId { get; set; }
+
+        [ForeignKey("EntidadFinanciera")]
+        public int IdEntidadFinanciera { get; set; }
+
+        public virtual EntidadFinanciera EntidadFinanciera { get; set; } 
     }
 }

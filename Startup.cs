@@ -22,6 +22,8 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Crud.Models;
+using Crud.Permissions;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Crud
 {
@@ -67,6 +69,7 @@ namespace Crud
             services.AddIdentityCore<User>().AddRoles<IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>();
 
             services.AddScoped<UserManager<User>>();
+            services.AddScoped<RoleManager<IdentityRole>>();
             services.AddScoped<IIdentityService, IdentityService>();
 
             var jwtSettings = new JWTSettigs();
@@ -92,6 +95,17 @@ namespace Crud
                 x.SaveToken = true;
                 x.TokenValidationParameters = tokenValidationParameter;
 
+            });
+
+
+            services.AddTransient<IAuthorizationHandler, AdminAuthorization>();
+
+            services.AddAuthorization(options =>
+            {
+                options.AddPolicy("AdminAuthorization", policy => {
+                    policy.RequireAuthenticatedUser();
+                    policy.AuthenticationSchemes.Add(JwtBearerDefaults.AuthenticationScheme);
+                    policy.Requirements.Add(new AdminRequirements());});
             });
 
             services.AddSingleton(tokenValidationParameter);
@@ -133,7 +147,7 @@ namespace Crud
                 });
             });
 
-            
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

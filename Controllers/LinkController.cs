@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Crud.Data;
 using Crud.Models;
+using Crud.DTOs;
+using Crud.Services;
 
 namespace Crud.Controllers
 {
@@ -15,9 +17,11 @@ namespace Crud.Controllers
     public class LinkController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IIdentityService _identityService;
 
-        public LinkController(ApplicationDbContext context)
+        public LinkController(ApplicationDbContext context, IIdentityService identityService)
         {
+            _identityService = identityService;
             _context = context;
         }
 
@@ -30,9 +34,31 @@ namespace Crud.Controllers
 
         // GET: api/Link/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Link>> GetLink(int id)
+        public async Task<ActionResult<Object>> GetLink(int id)
         {
-            var link = await _context.Link.FindAsync(id);
+            var link = _context.Link
+                         .Include(c => c.Categoria)
+                         .Include(c => c.Creador)
+                         .Where(c => (c.Id == id))
+                         .Select(item => new
+                         {
+                             id = item.Id,
+                             username = item.Creador.Usuario.UserName,
+                             titulo = item.Titulo,
+                             descripcion = item.Descripcion,
+                             fechaCreacion = item.FechaCreacion.ToShortDateString(),
+                             categoriaId = item.CategoriaId,
+                             categoriaNombre = item.Categoria.Nombre,
+                             texto = "",
+                             largo = 0,
+                             archivo = "",
+                             calidad = "",
+                             duracion = 0,
+                             duracionVideo = 0,
+                             url = item.Url,
+                             fechaInicio = "",
+                             fechaFin = "",
+                         }).FirstOrDefault();
 
             if (link == null)
             {
@@ -76,12 +102,29 @@ namespace Crud.Controllers
         // POST: api/Link
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Link>> PostLink(Link link)
+        public async Task<ActionResult<Link>> PostLink(ContenidoDto.ContenidoRegistro contenido)
         {
+            var user = await _identityService.GetUserInfo(HttpContext.User);
+            var link = new Link
+            {
+                CreadorId = user.Id,
+                Titulo = contenido.Titulo,
+                Descripcion = contenido.Descripcion,
+                FechaCreacion = DateTime.Now.Date,
+                Bloqueado = false,
+                DerechoAutor = contenido.DerechoAutor,
+                //Archivo = contenido.Archivo,
+                //Calidad = contenido.Calidad,
+                CategoriaId = contenido.CategoriaId,
+                TipoSuscripcionId = contenido.TipoSuscripcionId,
+                Url = contenido.Url,
+                
+            };
+
             _context.Link.Add(link);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetLink", new { id = link.Id }, link);
+            return Ok();
         }
 
         // DELETE: api/Link/5
