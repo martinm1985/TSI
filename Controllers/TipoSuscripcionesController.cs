@@ -141,12 +141,28 @@ namespace Crud.Controllers
         // POST: api/TipoSuscripciones
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<TipoSuscripcion>> PostTipoSuscripcion(TipoSuscripcion tipoSuscripcion)
+        public async Task<ActionResult<TipoSuscripcion>> PostTipoSuscripcion(SuscripcionDto.TipoSuscripcionDto request)
         {
-            _context.TipoSuscripcion.Add(tipoSuscripcion);
+            var user = await _identityService.GetUserInfo(HttpContext.User);
+            if(user == null) return Unauthorized();
+            var newTipoSuscripcion = new TipoSuscripcion
+            {
+                Nombre = request.Nombre,
+                Precio = request.Precio,
+                Activo = request.Activo,
+                Beneficios = request.Beneficios,
+                Imagen = request.Imagen,
+                MensajeBienvenida = request.MensajeBienvenida,
+                MensajeriaActiva = request.MensajeriaActiva,
+                IncluyeTipoSuscrId = null,
+                VideoBienvenida = request.VideoBienvenida,
+                CreadorId = user.Id
+            };
+
+            _context.TipoSuscripcion.Add(newTipoSuscripcion);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetTipoSuscripcion", new { id = tipoSuscripcion.Id }, tipoSuscripcion);
+            return Ok();
         }
 
         // DELETE: api/TipoSuscripciones/5

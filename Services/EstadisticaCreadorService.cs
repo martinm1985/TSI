@@ -25,8 +25,8 @@ namespace Crud.Services
         public List<EstadisticaCreador> Get() =>
             _estCreador.Find(est => true).ToList();
 
-        public EstadisticaCreador Get(string id) =>
-            _estCreador.Find(est => est.Id == id).FirstOrDefault();
+        public List<EstadisticaCreador> Get(string id) =>
+            _estCreador.Find(est => est.CreadorId == id).ToList();
 
         public EstadisticaCreador Create(EstadisticaCreador est)
         {
@@ -49,18 +49,20 @@ namespace Crud.Services
             return new DateTime(today.Year, today.Month, 1);
 
         }
-        public EstadisticaCreador GetCurrentEstadisticaCreador()
+        public EstadisticaCreador GetCurrentEstadisticaCreador(string id)
         {
 
-            return _estCreador.Find(est => est.FechaMes == CurrentMonth()).FirstOrDefault();
+            return _estCreador
+                    .Find(est => est.FechaMes == CurrentMonth() && est.CreadorId == id)
+                    .FirstOrDefault();
         }
 
-        public void AddSeguidor()
+        public void AddSeguidor(string id)
         {
-            var currentValue = GetCurrentEstadisticaCreador();
+            var currentValue = GetCurrentEstadisticaCreador(id);
             if (currentValue != null)
             {
-                var filter = Builders<EstadisticaCreador>.Filter.Where(est => est.FechaMes == currentValue.FechaMes);
+                var filter = Builders<EstadisticaCreador>.Filter.Where(est => est.FechaMes == currentValue.FechaMes && est.CreadorId == id);
                 var update = Builders<EstadisticaCreador>.Update.Set(est => est.CantSeguidores, currentValue.CantSeguidores + 1);
                 var options = new FindOneAndUpdateOptions<EstadisticaCreador>();
                 _estCreador.FindOneAndUpdate(filter, update, options);
@@ -69,6 +71,7 @@ namespace Crud.Services
             {
                 EstadisticaCreador estadisticaCreador = new()
                 {
+                    CreadorId = id,
                     FechaMes = CurrentMonth(),
                     CantSeguidores = 1,
                     CantVisitasPerfil = 0,
@@ -77,13 +80,24 @@ namespace Crud.Services
                 Create(estadisticaCreador);
             }
         }
-
-        public void AddSuscripcion()
+        public void SubSeguidor(string id)
         {
-            var currentValue = GetCurrentEstadisticaCreador();
+            var currentValue = GetCurrentEstadisticaCreador(id);
             if (currentValue != null)
             {
-                var filter = Builders<EstadisticaCreador>.Filter.Where(est => est.FechaMes == currentValue.FechaMes);
+                var filter = Builders<EstadisticaCreador>.Filter.Where(est => est.FechaMes == currentValue.FechaMes && est.CreadorId == id);
+                var update = Builders<EstadisticaCreador>.Update.Set(est => est.CantSeguidores, currentValue.CantSeguidores - 1);
+                var options = new FindOneAndUpdateOptions<EstadisticaCreador>();
+                _estCreador.FindOneAndUpdate(filter, update, options);
+            }
+        }
+
+        public void AddSuscripcion(string id)
+        {
+            var currentValue = GetCurrentEstadisticaCreador(id);
+            if (currentValue != null)
+            {
+                var filter = Builders<EstadisticaCreador>.Filter.Where(est => est.FechaMes == currentValue.FechaMes && est.CreadorId == id);
                 var update = Builders<EstadisticaCreador>.Update.Set(est => est.CantSuscripciones, currentValue.CantSuscripciones + 1);
                 var options = new FindOneAndUpdateOptions<EstadisticaCreador>();
                 _estCreador.FindOneAndUpdate(filter, update, options);
@@ -92,6 +106,7 @@ namespace Crud.Services
             {
                 EstadisticaCreador estadisticaCreador = new()
                 {
+                    CreadorId = id,
                     FechaMes = CurrentMonth(),
                     CantSeguidores = 0,
                     CantVisitasPerfil = 0,
@@ -101,12 +116,24 @@ namespace Crud.Services
             }
         }
 
-        public void AddVisitaPerfil()
+        public void SubSuscripcion(string id)
         {
-            var currentValue = GetCurrentEstadisticaCreador();
+            var currentValue = GetCurrentEstadisticaCreador(id);
             if (currentValue != null)
             {
-                var filter = Builders<EstadisticaCreador>.Filter.Where(est => est.FechaMes == currentValue.FechaMes);
+                var filter = Builders<EstadisticaCreador>.Filter.Where(est => est.FechaMes == currentValue.FechaMes && est.CreadorId == id);
+                var update = Builders<EstadisticaCreador>.Update.Set(est => est.CantSuscripciones, currentValue.CantSuscripciones - 1);
+                var options = new FindOneAndUpdateOptions<EstadisticaCreador>();
+                _estCreador.FindOneAndUpdate(filter, update, options);
+            }
+        }
+
+        public void AddVisitaPerfil(string id)
+        {
+            var currentValue = GetCurrentEstadisticaCreador(id);
+            if (currentValue != null)
+            {
+                var filter = Builders<EstadisticaCreador>.Filter.Where(est => est.FechaMes == currentValue.FechaMes && est.CreadorId == id);
                 var update = Builders<EstadisticaCreador>.Update.Set(est => est.CantVisitasPerfil, currentValue.CantVisitasPerfil + 1);
                 var options = new FindOneAndUpdateOptions<EstadisticaCreador>();
                 _estCreador.FindOneAndUpdate(filter, update, options);
@@ -115,6 +142,7 @@ namespace Crud.Services
             {
                 EstadisticaCreador estadisticaCreador = new()
                 {
+                    CreadorId = id,
                     FechaMes = CurrentMonth(),
                     CantSeguidores = 0,
                     CantVisitasPerfil = 1,

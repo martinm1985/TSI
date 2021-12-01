@@ -11,7 +11,7 @@ namespace Crud.Models
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
         public string Id { get; set; }
-        public string IdContenido {  get; set;}
+        public int IdContenido {  get; set;}
         [DataType(DataType.Date)]
         public DateTime Fecha {  get; set; }
         public int Visualizaciones {  get; set; }

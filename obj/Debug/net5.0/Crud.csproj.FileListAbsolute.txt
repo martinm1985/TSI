@@ -458,3 +458,5 @@
 /Users/martinmarr/Documents/TSI-Github/TSI1/backend/obj/Debug/net5.0/Crud.xml
 /Users/martinmarr/Documents/TSI-Github/TSI1/backend/obj/Debug/net5.0/Crud.pdb
 /Users/martinmarr/Documents/TSI-Github/TSI1/backend/obj/Debug/net5.0/Crud.genruntimeconfig.cache
+/Users/martinmarr/Documents/TSI-Github/TSI1/backend/bin/Debug/net5.0/SendGrid.dll
+/Users/martinmarr/Documents/TSI-Github/TSI1/backend/bin/Debug/net5.0/StarkbankEcdsa.dll

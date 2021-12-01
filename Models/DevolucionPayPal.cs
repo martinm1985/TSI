@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Crud.Models
 {
-    public class PagoPayPal
+    public class DevolucionPayPal
     {
         [Key]
         public int Id { get; set; }
@@ -14,12 +14,10 @@ namespace Crud.Models
 
         public virtual Pago Pago { get; set; }
 
-        public string OrderId {get; set;}
+        public string DevolucionId { get; set; }
 
-        public string IdCaptura { get; set; }
+        public string EstadoDevolucion { get; set; }
 
-        public string EstadoPago { get; set;}
-
-        public DateTime FechaPago { get; set; }
+        public DateTime FechaDevolucion{ get; set; }
     }
 }

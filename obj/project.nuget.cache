@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "JV4Th+z1cPRKi/64OEHOoPD4sjvllpI8KoQItY++zWuhRF5FkAj04m8MMoDzarvowlFTZg/jhmhXXgeq5NOlpg==",
+  "dgSpecHash": "3zcvnrmCK5XCL9OChxgLVOX74Rm9g1I6dUBpDKwXVMj6Ydo1pdmm2IM3qWAO1aBqEEcwOzOe3bRQxAhMCA7Xtw==",
   "success": true,
   "projectFilePath": "/Users/martinmarr/Documents/TSI-Github/TSI1/backend/Crud.csproj",
   "expectedPackageFiles": [
@@ -94,7 +94,9 @@
     "/Users/martinmarr/.nuget/packages/newtonsoft.json.bson/1.0.2/newtonsoft.json.bson.1.0.2.nupkg.sha512",
     "/Users/martinmarr/.nuget/packages/restsharp/106.12.0/restsharp.106.12.0.nupkg.sha512",
     "/Users/martinmarr/.nuget/packages/runtime.native.system/4.3.0/runtime.native.system.4.3.0.nupkg.sha512",
+    "/Users/martinmarr/.nuget/packages/sendgrid/9.25.0/sendgrid.9.25.0.nupkg.sha512",
     "/Users/martinmarr/.nuget/packages/sharpcompress/0.23.0/sharpcompress.0.23.0.nupkg.sha512",
+    "/Users/martinmarr/.nuget/packages/starkbank-ecdsa/1.3.3/starkbank-ecdsa.1.3.3.nupkg.sha512",
     "/Users/martinmarr/.nuget/packages/swashbuckle.aspnetcore/6.2.2/swashbuckle.aspnetcore.6.2.2.nupkg.sha512",
     "/Users/martinmarr/.nuget/packages/swashbuckle.aspnetcore.swagger/6.2.2/swashbuckle.aspnetcore.swagger.6.2.2.nupkg.sha512",
     "/Users/martinmarr/.nuget/packages/swashbuckle.aspnetcore.swaggergen/6.2.2/swashbuckle.aspnetcore.swaggergen.6.2.2.nupkg.sha512",

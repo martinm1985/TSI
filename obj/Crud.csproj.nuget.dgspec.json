@@ -14,7 +14,7 @@
         "outputPath": "/Users/martinmarr/Documents/TSI-Github/TSI1/backend/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "/Users/martinmarr/.nuget/NuGet/NuGet.Config"
+          "/Users/martinmarr/.config/NuGet/NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net5.0"
@@ -91,6 +91,10 @@
             "RestSharp": {
               "target": "Package",
               "version": "[106.12.0, )"
+            },
+            "SendGrid": {
+              "target": "Package",
+              "version": "[9.25.0, )"
             },
             "Swashbuckle.AspNetCore": {
               "target": "Package",

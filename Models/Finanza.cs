@@ -10,13 +10,13 @@ namespace Crud.Models
 {
     public class Finanza
     {
-        
+
         [Key]
         public int FinanzaId { get; set; }
 
         [Required(ErrorMessage = "Se debe agregar una fecha")]
         [DataType(DataType.Date)]
-        public DateTime FechaMes {  get; set; }
+        public DateTime FechaMes { get; set; }
 
         [Column(TypeName = "decimal(18,2)")]
         public Decimal Monto { get; set; } = 0;
@@ -25,5 +25,7 @@ namespace Crud.Models
 
         [Column(TypeName = "decimal(18,2)")]
         public Decimal Indicador { get; set; }
+
+        public string CreadorId {get; set;}
     }
 }

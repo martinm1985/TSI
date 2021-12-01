@@ -1422,6 +1422,19 @@
           "lib/netstandard1.0/_._": {}
         }
       },
+      "SendGrid/9.25.0": {
+        "type": "package",
+        "dependencies": {
+          "Newtonsoft.Json": "9.0.1",
+          "starkbank-ecdsa": "[1.3.3, 2.0.0)"
+        },
+        "compile": {
+          "lib/netstandard2.0/SendGrid.dll": {}
+        },
+        "runtime": {
+          "lib/netstandard2.0/SendGrid.dll": {}
+        }
+      },
       "SharpCompress/0.23.0": {
         "type": "package",
         "dependencies": {
@@ -1432,6 +1445,15 @@
         },
         "runtime": {
           "lib/netstandard2.0/SharpCompress.dll": {}
+        }
+      },
+      "starkbank-ecdsa/1.3.3": {
+        "type": "package",
+        "compile": {
+          "lib/netstandard2.1/StarkbankEcdsa.dll": {}
+        },
+        "runtime": {
+          "lib/netstandard2.1/StarkbankEcdsa.dll": {}
         }
       },
       "Swashbuckle.AspNetCore/6.2.2": {
@@ -4854,6 +4876,29 @@
         "runtime.native.system.nuspec"
       ]
     },
+    "SendGrid/9.25.0": {
+      "sha512": "mYVzc+tcqVvmxamSiJR2cRlC3+TJcTxEzvBHiG+SASAanMYTz6ecL11iWIBIw8eqThDMUMmq8/XsXP0JKuMLpg==",
+      "type": "package",
+      "path": "sendgrid/9.25.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "lib/net40/SendGrid.dll",
+        "lib/net40/SendGrid.pdb",
+        "lib/net40/SendGrid.xml",
+        "lib/net452/SendGrid.dll",
+        "lib/net452/SendGrid.pdb",
+        "lib/net452/SendGrid.xml",
+        "lib/netstandard1.3/SendGrid.dll",
+        "lib/netstandard1.3/SendGrid.pdb",
+        "lib/netstandard1.3/SendGrid.xml",
+        "lib/netstandard2.0/SendGrid.dll",
+        "lib/netstandard2.0/SendGrid.pdb",
+        "lib/netstandard2.0/SendGrid.xml",
+        "sendgrid.9.25.0.nupkg.sha512",
+        "sendgrid.nuspec"
+      ]
+    },
     "SharpCompress/0.23.0": {
       "sha512": "HBbT47JHvNrsZX2dTBzUBOSzBt+EmIRGLIBkbxcP6Jef7DB4eFWQX5iHWV3Nj7hABFPCjISrZ8s0z72nF2zFHQ==",
       "type": "package",
@@ -4868,6 +4913,22 @@
         "lib/netstandard2.0/SharpCompress.dll",
         "sharpcompress.0.23.0.nupkg.sha512",
         "sharpcompress.nuspec"
+      ]
+    },
+    "starkbank-ecdsa/1.3.3": {
+      "sha512": "OblOaKb1enXn+dSp7tsx9yjwV+/BEKM9jFhshIkZTwCk7LuTFTp+wSon6rFzuPiIiTGtvVWQNUw2slHjGktJog==",
+      "type": "package",
+      "path": "starkbank-ecdsa/1.3.3",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "lib/net40/StarkbankEcdsa.dll",
+        "lib/net452/StarkbankEcdsa.dll",
+        "lib/netstandard1.3/StarkbankEcdsa.dll",
+        "lib/netstandard2.0/StarkbankEcdsa.dll",
+        "lib/netstandard2.1/StarkbankEcdsa.dll",
+        "starkbank-ecdsa.1.3.3.nupkg.sha512",
+        "starkbank-ecdsa.nuspec"
       ]
     },
     "Swashbuckle.AspNetCore/6.2.2": {
@@ -8641,6 +8702,7 @@
       "MongoDB.Driver >= 2.13.2",
       "Newtonsoft.Json >= 13.0.1",
       "RestSharp >= 106.12.0",
+      "SendGrid >= 9.25.0",
       "Swashbuckle.AspNetCore >= 6.2.2",
       "System.Linq >= 4.3.0"
     ]
@@ -8658,7 +8720,7 @@
       "outputPath": "/Users/martinmarr/Documents/TSI-Github/TSI1/backend/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "/Users/martinmarr/.nuget/NuGet/NuGet.Config"
+        "/Users/martinmarr/.config/NuGet/NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net5.0"
@@ -8735,6 +8797,10 @@
           "RestSharp": {
             "target": "Package",
             "version": "[106.12.0, )"
+          },
+          "SendGrid": {
+            "target": "Package",
+            "version": "[9.25.0, )"
           },
           "Swashbuckle.AspNetCore": {
             "target": "Package",

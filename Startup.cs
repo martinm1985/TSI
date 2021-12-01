@@ -52,6 +52,7 @@ namespace Crud
             services.AddSingleton<EstadisticaCreadorService>();
             services.AddSingleton<EstadisticaPlataformaService>();
 
+
             services.AddAutoMapper(typeof(Startup));
 
             services.AddControllersWithViews();
@@ -64,13 +65,17 @@ namespace Crud
                     Builder.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin();
                 })
             );
+
             services.AddIdentity<IdentityUser, IdentityRole>()
                 .AddEntityFrameworkStores<ApplicationDbContext>();
-            services.AddIdentityCore<User>().AddRoles<IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>();
+
+            services.AddIdentityCore<User>().AddRoles<IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>().AddDefaultTokenProviders();
+
 
             services.AddScoped<UserManager<User>>();
             services.AddScoped<RoleManager<IdentityRole>>();
             services.AddScoped<IIdentityService, IdentityService>();
+            services.AddScoped<IPagoService, PagosService>();
 
             var jwtSettings = new JWTSettigs();
             Configuration.Bind(key: "JWT", jwtSettings);
@@ -96,7 +101,6 @@ namespace Crud
                 x.TokenValidationParameters = tokenValidationParameter;
 
             });
-
 
             services.AddTransient<IAuthorizationHandler, AdminAuthorization>();
 

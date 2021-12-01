@@ -1,5 +1,5 @@
 {
-  "FilePath": "/Users/martinmarr/Documents/TSI-backend/Crud.csproj",
+  "FilePath": "/Users/martinmarr/Documents/TSI-Github/TSI1/backend/Crud.csproj",
   "Configuration": {
     "ConfigurationName": "MVC-3.0",
     "LanguageVersion": "5.0",
@@ -15619,58 +15619,58 @@
   "RootNamespace": "Crud",
   "Documents": [
     {
-      "FilePath": "/Users/martinmarr/Documents/TSI-backend/Views/Home/Privacy.cshtml",
-      "TargetPath": "Views\\Home\\Privacy.cshtml",
-      "FileKind": "mvc"
-    },
-    {
-      "FilePath": "/Users/martinmarr/Documents/TSI-backend/Views/Shared/Error.cshtml",
-      "TargetPath": "Views\\Shared\\Error.cshtml",
-      "FileKind": "mvc"
-    },
-    {
-      "FilePath": "/Users/martinmarr/Documents/TSI-backend/Views/MediosDePagos/Create.cshtml",
-      "TargetPath": "Views\\MediosDePagos\\Create.cshtml",
-      "FileKind": "mvc"
-    },
-    {
-      "FilePath": "/Users/martinmarr/Documents/TSI-backend/Views/_ViewStart.cshtml",
-      "TargetPath": "Views\\_ViewStart.cshtml",
-      "FileKind": "mvc"
-    },
-    {
-      "FilePath": "/Users/martinmarr/Documents/TSI-backend/Views/Shared/_Layout.cshtml",
-      "TargetPath": "Views\\Shared\\_Layout.cshtml",
-      "FileKind": "mvc"
-    },
-    {
-      "FilePath": "/Users/martinmarr/Documents/TSI-backend/Views/MediosDePagos/Delete.cshtml",
-      "TargetPath": "Views\\MediosDePagos\\Delete.cshtml",
-      "FileKind": "mvc"
-    },
-    {
-      "FilePath": "/Users/martinmarr/Documents/TSI-backend/Views/MediosDePagos/Edit.cshtml",
-      "TargetPath": "Views\\MediosDePagos\\Edit.cshtml",
-      "FileKind": "mvc"
-    },
-    {
-      "FilePath": "/Users/martinmarr/Documents/TSI-backend/Views/Home/Index.cshtml",
-      "TargetPath": "Views\\Home\\Index.cshtml",
-      "FileKind": "mvc"
-    },
-    {
-      "FilePath": "/Users/martinmarr/Documents/TSI-backend/Views/Shared/_ValidationScriptsPartial.cshtml",
-      "TargetPath": "Views\\Shared\\_ValidationScriptsPartial.cshtml",
-      "FileKind": "mvc"
-    },
-    {
-      "FilePath": "/Users/martinmarr/Documents/TSI-backend/Views/_ViewImports.cshtml",
+      "FilePath": "/Users/martinmarr/Documents/TSI-Github/TSI1/backend/Views/_ViewImports.cshtml",
       "TargetPath": "Views\\_ViewImports.cshtml",
       "FileKind": "mvc"
     },
     {
-      "FilePath": "/Users/martinmarr/Documents/TSI-backend/Views/MediosDePagos/Index.cshtml",
+      "FilePath": "/Users/martinmarr/Documents/TSI-Github/TSI1/backend/Views/_ViewStart.cshtml",
+      "TargetPath": "Views\\_ViewStart.cshtml",
+      "FileKind": "mvc"
+    },
+    {
+      "FilePath": "/Users/martinmarr/Documents/TSI-Github/TSI1/backend/Views/Home/Privacy.cshtml",
+      "TargetPath": "Views\\Home\\Privacy.cshtml",
+      "FileKind": "mvc"
+    },
+    {
+      "FilePath": "/Users/martinmarr/Documents/TSI-Github/TSI1/backend/Views/MediosDePagos/Delete.cshtml",
+      "TargetPath": "Views\\MediosDePagos\\Delete.cshtml",
+      "FileKind": "mvc"
+    },
+    {
+      "FilePath": "/Users/martinmarr/Documents/TSI-Github/TSI1/backend/Views/Shared/_ValidationScriptsPartial.cshtml",
+      "TargetPath": "Views\\Shared\\_ValidationScriptsPartial.cshtml",
+      "FileKind": "mvc"
+    },
+    {
+      "FilePath": "/Users/martinmarr/Documents/TSI-Github/TSI1/backend/Views/Shared/Error.cshtml",
+      "TargetPath": "Views\\Shared\\Error.cshtml",
+      "FileKind": "mvc"
+    },
+    {
+      "FilePath": "/Users/martinmarr/Documents/TSI-Github/TSI1/backend/Views/MediosDePagos/Create.cshtml",
+      "TargetPath": "Views\\MediosDePagos\\Create.cshtml",
+      "FileKind": "mvc"
+    },
+    {
+      "FilePath": "/Users/martinmarr/Documents/TSI-Github/TSI1/backend/Views/Home/Index.cshtml",
+      "TargetPath": "Views\\Home\\Index.cshtml",
+      "FileKind": "mvc"
+    },
+    {
+      "FilePath": "/Users/martinmarr/Documents/TSI-Github/TSI1/backend/Views/MediosDePagos/Index.cshtml",
       "TargetPath": "Views\\MediosDePagos\\Index.cshtml",
+      "FileKind": "mvc"
+    },
+    {
+      "FilePath": "/Users/martinmarr/Documents/TSI-Github/TSI1/backend/Views/MediosDePagos/Edit.cshtml",
+      "TargetPath": "Views\\MediosDePagos\\Edit.cshtml",
+      "FileKind": "mvc"
+    },
+    {
+      "FilePath": "/Users/martinmarr/Documents/TSI-Github/TSI1/backend/Views/Shared/_Layout.cshtml",
+      "TargetPath": "Views\\Shared\\_Layout.cshtml",
       "FileKind": "mvc"
     }
   ],

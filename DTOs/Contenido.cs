@@ -22,7 +22,7 @@ namespace Crud.DTOs
             public string Calidad { get; set; }
             public string Duracion { get; set; }
             public int? CategoriaId { get; set; }
-            public int TipoSuscripcionId { get; set; }
+            public int? TipoSuscripcionId { get; set; }
             public int Largo { get; set; }
             public string Texto { get; set; }
             public DateTime FechaInicio { get; set; }
@@ -60,5 +60,28 @@ namespace Crud.DTOs
             public string Descripcion { get; set; }
 
         }
+
+        public record GetAllContenido
+        {
+            public int Id { get; set; }
+            public string CreadorId { get; set; }
+            public string Username { get; set; }
+            public string Titulo { get; set; }
+            public string Descripcion { get; set; }
+            public string FechaCreacion { get; set; }
+            public int? CategoriaId { get; set; }
+            public string CategoriaNombre { get; set; }
+            public string Texto { get; set; }
+            public int? Largo { get; set; }
+            public string Archivo { get; set; }
+            public string Calidad { get; set; }
+            public Decimal? Duracion { get; set; }
+            public Decimal? DuracionVideo { get; set; }
+            public string Url { get; set; }
+            public string FechaInicio { get; set; }
+            public string FechaFin { get; set; }
+            public int? SuscripcionId { get; set; }
+        }
+                           
     }
 }

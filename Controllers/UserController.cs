@@ -151,15 +151,14 @@ namespace Crud.Controllers
 
             var creatorsList = followingList
                 .Select(id =>
-                    _context.Creadores
+                    _context.Usuarios
                     .Where(u => u.Id == id)
-                    .Include(c => c.Usuario)
                     .Select(item => new
                     {
-                        userid = item.UserId,
-                        username = item.Usuario.UserName,
-                        name = item.Usuario.Name,
-                        surname = item.Usuario.Surname,
+                        userid = item.Id,
+                        username = item.UserName,
+                        name = item.Name,
+                        surname = item.Surname,
                     }).FirstOrDefault()
                     );
 

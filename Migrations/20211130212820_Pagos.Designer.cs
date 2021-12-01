@@ -4,14 +4,16 @@ using Crud.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Crud.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20211130212820_Pagos")]
+    partial class Pagos
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -33,18 +35,6 @@ namespace Crud.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Categoria");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Nombre = "Fotografia"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Nombre = "Videos"
-                        });
                 });
 
             modelBuilder.Entity("Crud.Models.Contenido", b =>
@@ -638,7 +628,7 @@ namespace Crud.Migrations
                             IncluyeTipoSuscrId = 2,
                             MensajeBienvenida = "",
                             MensajeriaActiva = true,
-                            Nombre = "Premium",
+                            Nombre = "Estandar",
                             Precio = 10f,
                             VideoBienvenida = false
                         });
@@ -723,16 +713,16 @@ namespace Crud.Migrations
                         {
                             Id = "1",
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "7321faff-dbc7-43a7-8ebc-194c7c9f92bf",
+                            ConcurrencyStamp = "68e14434-7834-4609-bcc1-67de022fc6b5",
                             Email = "creadoresuyadmin@gmail.com",
                             EmailConfirmed = false,
                             LockoutEnabled = false,
                             Name = "Creadores",
                             NormalizedEmail = "CREADORESUYADMIN@GMAIL.COM",
                             NormalizedUserName = "CREADORESUY",
-                            PasswordHash = "AQAAAAEAACcQAAAAEMTkZf8FYc0fad10dZlVCk2gVtc5VxdcgT0M2H7Nn1tspZC4fJiNyxlZdEQBRSCnbQ==",
+                            PasswordHash = "AQAAAAEAACcQAAAAEOuELouHtq3fFxixiprxYbv9BwVOqdoCnFq0VDsFCDNCl9UxtgpMRPVo5O8t5wcRGg==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "5cc8d9de-f739-48cb-96b1-08d4b20c833e",
+                            SecurityStamp = "9088fbda-d868-448c-9d8f-4569e1803f9a",
                             Surname = "UY",
                             TwoFactorEnabled = false,
                             UserName = "CreadoresUY",
@@ -785,7 +775,7 @@ namespace Crud.Migrations
                         new
                         {
                             Id = "1",
-                            ConcurrencyStamp = "3870dbc9-ed1b-4271-800e-3a9e45fa4605",
+                            ConcurrencyStamp = "4a771350-86a3-4bd5-bc36-140d046cd767",
                             Name = "Administrator",
                             NormalizedName = "ADMINISTRATOR"
                         });

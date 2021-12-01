@@ -1,129 +1,236 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System;
-using System.Collections.Generic;
 using Crud.Models;
 using Crud.Data;
-using Microsoft.Extensions.Options;
-using System.Net.Http;
-using RestSharp;
-using RestSharp.Authenticators;
-using Newtonsoft.Json;
+using Crud.DTOs;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+using System.Linq;
+using Microsoft.AspNetCore.Identity;
+using System.Collections.Generic;
+using AutoMapper;
+using Crud.Services;
 
 namespace Crud.Controllers
 {
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [ApiController]
-    public class PagosApiController: ControllerBase
+    public class PagosApiController : ControllerBase
     {
-
-        public class AmountWithBreakdown
-        {
-            public string currency_code { get; set; }
-            public string value { get; set; }
-        }
-
-        public class PurchaseUnitRequest
-        {
-            public AmountWithBreakdown amount { get; internal set; }
-        }
-
-        public class OrderRequest
-        {
-
-
-            public string intent { get; set; }
-            public List<PurchaseUnitRequest> purchase_units { get; set; }
-            public object redirect_urls { get; set; }
-        }
-
-        internal class ApplicationContext
-        {
-
-            public string return_url { get; set; }
-            public string cancel_url { get; set; }
-        }
-
-        public class ResponseCheckout
-        {
-            public string id { get; set; }
-            public string status { get; set; }
-            public List<Link> links { get; set; }
-        }
-
-        public class Link
-        {
-            public string href { get; set; }
-            public string rel { get; set; }
-            public string method { get; set; }
-        }
-
-        static HttpClient client = new HttpClient();
-
         private readonly ApplicationDbContext _context;
 
-        private readonly IOptions<PaypalApiSetting> pSetting;
+        private readonly UserManager<User> _userManager;
 
-        public PagosApiController(ApplicationDbContext context, IOptions<PaypalApiSetting> setting)
+        private readonly IPagoService _pagosService;
+
+        public PagosApiController(ApplicationDbContext context, UserManager<User> userManager, IPagoService pagosService)
         {
-            this._context = context;
-
-            this.pSetting = setting;
-
+            _context = context;
+            _userManager = userManager;
+            _pagosService = pagosService;
         }
 
         [HttpPost]
-        [Route("api/pagos/Paypal")]
-        public void PagoPorPaypal([FromBody] AmountWithBreakdown amountFromBody)
+        [Route("api/pagos/registrarPago")]
+        public async Task<IActionResult> RegistrarPago(PagosRequest pago)
+        {
+            if (ModelState.IsValid)
+            {
+                var registroPago = new Pago
+                {
+                    IdMedioDePago = pago.IdMedioDePago,
+                    Fecha = DateTime.Now,
+                    //si es PayPal ya se cobró en caso contrario se debe cobrar
+                    Aprobado = pago.EsPayPal,
+                    Monto = pago.Monto,
+                    Moneda = pago.Moneda,
+                    Devolucion = pago.Devolucion,
+                    EsSuscripcion = pago.EsSuscripcion,
+                    EsPayPal = pago.EsPayPal,
+                    TipoSuscripcionId = pago.TipoSuscripcionId,
+                };
+
+                try
+                {
+                    _context.Pagos.Add(registroPago);
+                    await _context.SaveChangesAsync();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    return BadRequest("Error al registrar el pago");
+                }
+
+
+                if (pago.EsPayPal)
+                {
+
+                    var pagoPayPal = new PagoPayPal
+                    {
+                        PagoId = registroPago.IdPago,
+                        OrderId = pago.OrderId,
+                        IdCaptura = pago.IdCaptura,
+                        EstadoPago = pago.EstadoTransaccion,
+                        FechaPago = registroPago.Fecha
+                    };
+
+                    _context.PagosPayPal.Add(pagoPayPal);
+                }
+
+                try
+                {
+                    await _pagosService.ActualizarFinanzaPagoAsync(pago.Monto, pago.TipoSuscripcionId);
+                  
+                    await _context.SaveChangesAsync();
+                    return Ok();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    return BadRequest("Error al registrar PayPal");
+                }
+
+            }
+
+            return BadRequest("No coinciden los parámetros de entrada");
+        }
+
+
+        [HttpPost]
+        [Route("api/pagos/devolverPago")]
+        public async Task<IActionResult> DevolverPago(PagosRequest devolucion)
         {
 
-            // Construct a request object and set desired parameters
-            // Here, OrdersCreateRequest() creates a POST request to /v2/checkout/orders
-            var order = new OrderRequest()
+            if (ModelState.IsValid)
             {
-                intent = "CAPTURE",
-                purchase_units = new List<PurchaseUnitRequest>()
+
+                var pago = _context.Pagos.Where(m => m.IdPago == devolucion.Id).First();
+
+                var registroDevolucion = new Pago
                 {
-                    new PurchaseUnitRequest()
+                    IdMedioDePago = pago.IdMedioDePago,
+                    Fecha = DateTime.Now,
+                    //si es PayPal ya se devolvió en caso contrario se debe cobrar
+                    Aprobado = pago.EsPayPal,
+                    Monto = pago.Monto,
+                    Moneda = pago.Moneda,
+                    Devolucion = true,
+                    EsSuscripcion = pago.EsSuscripcion,
+                    EsPayPal = pago.EsPayPal,
+                    //el IdPago asociado a la devolución
+                    IdPagoDevolucion = pago.IdPago,
+                    ObservacionDevolucion = devolucion.ObservacionDevolucion,
+                    TipoSuscripcionId = pago.TipoSuscripcionId
+                };
+
+                try
+                {
+                    _context.Pagos.Add(registroDevolucion);
+                    await _pagosService.ActualizarFinanzaDevolucionAsync(pago.IdPago);
+                    await _context.SaveChangesAsync();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    return BadRequest("Error al registrar el pago");
+                }
+
+
+                if (pago.EsPayPal)
+                {
+
+                    var devolucionPayPal = new DevolucionPayPal
                     {
-                        amount = amountFromBody
-                    }
-                },
-                redirect_urls = new ApplicationContext()
-                {
-                    return_url = "https://www.example.com",
-                    cancel_url = "https://www.example.com"
+                        PagoId = registroDevolucion.IdPago,
+                        DevolucionId = devolucion.DevolucionId,
+                        EstadoDevolucion = devolucion.EstadoTransaccion,
+                        FechaDevolucion = registroDevolucion.Fecha
+                    };
+
+                    _context.DevolucionesPayPal.Add(devolucionPayPal);
                 }
-            };
+
+                try
+                {
+
+                    await _context.SaveChangesAsync();
+                    return Ok();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    return BadRequest("Error al registrar PayPal");
+                }
 
 
+            }
 
-            string username = this.pSetting.Value.ClientID;
-            string password = this.pSetting.Value.Secret;
-            string baseApi = this.pSetting.Value.PayPalApiBase;
-            string urlCheckout = baseApi + "v2/checkout/orders";
+            return BadRequest("No coinciden los parámetros de entrada");
 
-            var client = new RestClient(urlCheckout);
-            client.Authenticator = new HttpBasicAuthenticator(username, password);
-            var request = new RestRequest();
-            //Creating a JavaScriptSerializer Object
-            //Use of JsonConvert.SerializeObject()
-            string jsonString = JsonConvert.SerializeObject(order);
 
-            request.AddJsonBody(jsonString);
-            var response = client.Post(request);
-            var content = response.Content; // Raw content as string
+        }
 
-            string redirectUrl = "";
 
-            foreach (Link item in JsonConvert.DeserializeObject<ResponseCheckout>(response.Content).links)
+        [HttpGet]
+        [Route("api/medios/getPagosPayPal")]
+        public async Task<ActionResult<IEnumerable<PagosResponse>>> GetPagosPayPal()
+        {
+            var user = await _userManager.GetUserAsync(HttpContext.User);
+
+            //obtener los pagos de este usuario por medio de PayPal
+            var query = from p in _context.Pagos
+                        join medio in _context.MediosDePagos on p.IdMedioDePago equals medio.Id
+                        join paypal in _context.PagosPayPal on p.IdPago equals paypal.PagoId
+                        where medio.UserId == user.Id && !p.Devolucion
+                        select new PagosResponse {
+                            IdPago = p.IdPago,
+                            Fecha = p.Fecha,
+                            Aprobado = p.Aprobado,
+                            Monto = p.Monto,
+                            Moneda = p.Moneda,
+                            Devolucion = p.Devolucion,
+                            EsSuscripcion = p.EsSuscripcion,
+                            IdPagoDevolucion = p.IdPagoDevolucion,
+                            EsPayPal = p.EsPayPal,
+                            IdCaptura = paypal.IdCaptura
+                        };
+
+            if (query == null)
             {
-                if (item.rel == "approve")
-                {
-                    redirectUrl = item.href;
-                    break;
-                }
-            };
+                return NotFound();
+            }
 
-            Response.Redirect(redirectUrl);
+            return Ok(query.ToList());
+
+        }
+
+        [HttpGet]
+        [Route("api/medios/getPagosNoPayPal")]
+        public async Task<ActionResult<IEnumerable<PagosResponse>>> GetPagosNoPayPal()
+        {
+            var user = await _userManager.GetUserAsync(HttpContext.User);
+
+            //obtener los pagos de este usuario que no son PayPal
+            var query = from p in _context.Pagos
+                        join medio in _context.MediosDePagos on p.IdMedioDePago equals medio.Id
+                        where medio.UserId == user.Id && !p.Devolucion && !p.EsPayPal
+                        select new PagosResponse
+                        {
+                            IdPago = p.IdPago,
+                            Fecha = p.Fecha,
+                            Aprobado = p.Aprobado,
+                            Monto = p.Monto,
+                            Moneda = p.Moneda,
+                            Devolucion = p.Devolucion,
+                            EsSuscripcion = p.EsSuscripcion,
+                            IdPagoDevolucion = p.IdPagoDevolucion,
+                            EsPayPal = p.EsPayPal
+                        };
+
+            if (query == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(query.ToList());
 
         }
 

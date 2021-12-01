@@ -18,11 +18,13 @@ namespace Crud.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly IIdentityService _identityService;
+        private readonly EstadisticaContenidoService _estContenidoService;
 
-        public ContenidoController(ApplicationDbContext context, IIdentityService identityService)
+        public ContenidoController(ApplicationDbContext context, IIdentityService identityService, EstadisticaContenidoService estContenidoService)
         {
             _identityService = identityService;
             _context = context;
+            _estContenidoService = estContenidoService;
         }
 
         // GET: api/Contenido
@@ -106,39 +108,78 @@ namespace Crud.Controllers
                           from suscUsuario in DsuscUsuario.DefaultIfEmpty()
 
                           where cont.Bloqueado == false
-                          where (tipoSusc.Precio == 0 || (tipoSusc.Precio != 0 && 
-                                suscUsuario.UsuarioId != null && suscUsuario.UsuarioId == user.Id
-                                && suscUsuario.FechaFin == null && suscUsuario.Activo)) 
-                               // Es público o estoy suscripto y esta activa la suscripcion 
-                               // FALTA tomar en cuenta las suscripciones que estan incluidas !
-                          where tipoSusc.Activo
+                          where (tipoSusc == null || tipoSusc.Activo)
 
                           orderby cont.FechaCreacion
 
-                          select new
+                          select new ContenidoDto.GetAllContenido
                           {
-                              id = cont.Id,
-                              username = cont.Creador.Usuario.UserName,
-                              titulo = cont.Titulo,
-                              descripcion = cont.Descripcion,
-                              fechaCreacion = cont.FechaCreacion.ToShortDateString(),
-                              categoriaId = cont.CategoriaId,
-                              categoriaNombre = cont.Categoria.Nombre,
-                              texto = texto.Html,
-                              largo = texto.Largo == null ? (int?)null : texto.Largo,
-                              archivo = cont.Archivo,
-                              calidad = cont.Calidad,
-                              duracion = audio.Duracion == null ? (decimal?)null : audio.Duracion,
-                              duracionVideo = video.Duracion == null ? (decimal?)null : video.Duracion,
-                              url = link.Url,
-                              fechaInicio = liveStream.FechaInicio.ToShortDateString(),
-                              fechaFin = liveStream.FechaFin.ToShortDateString(),
-
+                              Id = cont.Id,
+                              CreadorId = cont.CreadorId,
+                              Username = cont.Creador.Usuario.UserName,
+                              Titulo = cont.Titulo,
+                              Descripcion = cont.Descripcion,
+                              FechaCreacion = cont.FechaCreacion.ToShortDateString(),
+                              CategoriaId = cont.CategoriaId,
+                              CategoriaNombre = cont.Categoria.Nombre,
+                              Texto = texto.Html,
+                              Largo = texto.Largo == null ? (int?)null : texto.Largo,
+                              Archivo = cont.Archivo,
+                              Calidad = cont.Calidad,
+                              Duracion = audio.Duracion == null ? (decimal?)null : audio.Duracion,
+                              DuracionVideo = video.Duracion == null ? (decimal?)null : video.Duracion,
+                              Url = link.Url,
+                              FechaInicio = liveStream.FechaInicio.ToShortDateString(),
+                              FechaFin = liveStream.FechaFin.ToShortDateString(),
+                              SuscripcionId = tipoSusc.Id,
                           })
                           .Skip((page - 1) * pageSize)
                           .Take(pageSize);
 
-            return Ok(result);
+            var suscripcionUsuario = _context.SuscripcionUsuario
+                                    .Where(s => s.UsuarioId == user.Id)
+                                    .Where(s => s.Activo)
+                                    .FirstOrDefault();
+
+            Dictionary<int, int> suscripcionesDict = new Dictionary<int, int>();
+
+            if (suscripcionUsuario != null)
+            {
+                int? suscId = suscripcionUsuario.TipoSuscripcionId;
+                while (suscId != null)
+                {
+                    suscripcionesDict.Add((int)suscId, (int)suscId);
+                    var addSusc = _context.TipoSuscripcion.Find(suscId);
+                    if(addSusc != null && addSusc.IncluyeTipoSuscrId != null)
+                    {
+                        suscId = addSusc.IncluyeTipoSuscrId;
+                    } else
+                    {
+                        suscId = null;
+                    }  
+                }
+            }
+            var contenidoResult = new List<ContenidoDto.GetAllContenido>();
+
+            foreach (var item in result)
+            {
+                if (item.SuscripcionId == null || item.CreadorId == user.Id)
+                {
+                    // No tiene suscripcion (es gratis) o soy el creador del contenido -> puedo ver el contenido
+                    contenidoResult.Add(item);
+                }
+                else
+                {
+                    int value = 0;
+                    if (suscripcionesDict.TryGetValue((int)item.SuscripcionId, out value))
+                    {
+                        // Esta entre las suscripciones incluidas al usuario -> puedo ver el contenido
+                        contenidoResult.Add(item);
+                    }
+                }
+            }
+
+            return Ok(contenidoResult);
         }
 
 
@@ -152,6 +193,12 @@ namespace Crud.Controllers
             {
                 return NotFound();
             }
+
+            try
+            {
+                _estContenidoService.AddVisualizacion(id);
+            }
+            catch (Exception){}
 
             return contenido;
         }
@@ -204,6 +251,12 @@ namespace Crud.Controllers
                 resultado.Descripcion = "Video";
             else if (contenido is Imagen)
                 resultado.Descripcion = "Imagen";
+
+            try
+            {
+                _estContenidoService.AddVisualizacion(id);
+            }
+            catch (Exception){}
 
             return resultado;
         }

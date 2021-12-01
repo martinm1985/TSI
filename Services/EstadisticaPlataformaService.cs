@@ -78,6 +78,18 @@ namespace Crud.Services
             }
         }
 
+        public void SubSeguidor()
+        {
+            var currentValue = GetCurrentEstadisticaPlataforma();
+            if (currentValue != null)
+            {
+                var filter = Builders<EstadisticaPlataforma>.Filter.Where(est => est.FechaMes == currentValue.FechaMes);
+                var update = Builders<EstadisticaPlataforma>.Update.Set(est => est.CantSeguidores, currentValue.CantSeguidores - 1);
+                var options = new FindOneAndUpdateOptions<EstadisticaPlataforma>();
+                _estPlataforma.FindOneAndUpdate(filter, update, options);
+            }
+        }
+
         public void AddSuscripcion()
         {
             var currentValue = GetCurrentEstadisticaPlataforma();
@@ -98,6 +110,18 @@ namespace Crud.Services
                     CantSuscripciones = 1,
                 };
                 Create(estadisticaPlataforma);
+            }
+        }
+
+        public void SubSuscripcion()
+        {
+            var currentValue = GetCurrentEstadisticaPlataforma();
+            if (currentValue != null)
+            {
+                var filter = Builders<EstadisticaPlataforma>.Filter.Where(est => est.FechaMes == currentValue.FechaMes);
+                var update = Builders<EstadisticaPlataforma>.Update.Set(est => est.CantSuscripciones, currentValue.CantSuscripciones - 1);
+                var options = new FindOneAndUpdateOptions<EstadisticaPlataforma>();
+                _estPlataforma.FindOneAndUpdate(filter, update, options);
             }
         }
 
