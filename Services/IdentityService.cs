@@ -323,13 +323,11 @@ namespace Crud.Services
             var client = new SendGridClient(apiKey);
             var from = new EmailAddress("creadoreu@gmail.com", "CreadoresUY");
             var subject = "Recuperación de contraseña";
-            var to = new EmailAddress("genaronadile@gmail.com", user.Name);
+            var to = new EmailAddress(email, user.Name);
             var plainTextContent = $"Para restaurar tu contraseña <a href='{webApp}reset_password?user={HttpUtility.UrlEncode(user.Id)}&code={HttpUtility.UrlEncode(code)}'>presiona aquí</a>.";
             var htmlContent = $"Para restaurar tu contraseña <a href='{webApp}reset_password?user={HttpUtility.UrlEncode(user.Id)}&code={HttpUtility.UrlEncode(code)}'>presiona aquí</a>.";
             var msg = MailHelper.CreateSingleEmail(from, to, subject, plainTextContent, htmlContent);
             var response = await client.SendEmailAsync(msg).ConfigureAwait(false);
-
-
             return;
 
         }
