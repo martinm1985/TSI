@@ -113,7 +113,7 @@ namespace Crud.Data
             {
                 Id = 3,
                 Creador = null,
-                Nombre = "Estandar",
+                Nombre = "Premium",
                 Precio = 10,
                 Imagen = "TODO",
                 Beneficios = "Todo lo que incluye el estandar;;CHATEA CONMIGO;;",
@@ -135,6 +135,31 @@ namespace Crud.Data
 
             modelbuilder.Entity<Parametros>().HasData(parametro3);
 
+            Parametros parametro4 = new()
+            {
+                Nombre = "GananciaCreador",
+                Valor = "0.9"
+
+            };
+
+
+            modelbuilder.Entity<Parametros>().HasData(parametro4);
+
+            Categoria categoria1 = new()
+            {
+                Id = 1,
+                Nombre = "Fotografia",
+
+            };
+            modelbuilder.Entity<Categoria>().HasData(categoria1);
+
+            Categoria categoria2 = new()
+            {
+                Id = 2,
+                Nombre = "Videos",
+
+            };
+            modelbuilder.Entity<Categoria>().HasData(categoria2);
 
         }
 
@@ -149,6 +174,10 @@ namespace Crud.Data
         public DbSet<EntidadFinanciera> EntidadesFinancieras { get; set; }
 
         public DbSet<Pago> Pagos { get; set; }
+
+        public DbSet<PagoPayPal> PagosPayPal { get; set; }
+
+        public DbSet<DevolucionPayPal> DevolucionesPayPal { get; set; }
 
         public DbSet<Crud.Models.Mensaje> Mensaje { get; set; }
 

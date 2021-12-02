@@ -18,11 +18,13 @@ namespace Crud.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly IIdentityService _identityService;
+        private readonly EstadisticaContenidoService _estContenidoService;
 
-        public ContenidoController(ApplicationDbContext context, IIdentityService identityService)
+        public ContenidoController(ApplicationDbContext context, IIdentityService identityService, EstadisticaContenidoService estContenidoService)
         {
             _identityService = identityService;
             _context = context;
+            _estContenidoService = estContenidoService;
         }
 
         // GET: api/Contenido
@@ -192,6 +194,12 @@ namespace Crud.Controllers
                 return NotFound();
             }
 
+            try
+            {
+                _estContenidoService.AddVisualizacion(id);
+            }
+            catch (Exception){}
+
             return contenido;
         }
 
@@ -244,6 +252,12 @@ namespace Crud.Controllers
             else if (contenido is Imagen)
                 resultado.Descripcion = "Imagen";
 
+            try
+            {
+                _estContenidoService.AddVisualizacion(id);
+            }
+            catch (Exception){}
+
             return resultado;
         }
 
@@ -287,6 +301,33 @@ namespace Crud.Controllers
             await _context.SaveChangesAsync();
 
             return CreatedAtAction("GetContenido", new { id = contenido.Id }, contenido);
+        }
+
+        [HttpPost("blockContent/{id}")]
+        public async Task<ActionResult> BlockContent(int id)
+        {
+            var user = await _identityService.GetUserInfo(HttpContext.User);
+            if (user == null || !user.isAdministrador )
+            {
+                return Unauthorized();
+            }
+            var contenido = _context.Contenido.Find(id);
+            if (contenido == null)
+            {
+                return BadRequest();
+            }
+            contenido.Bloqueado = true;
+            _context.Entry(contenido).State = EntityState.Modified;
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return BadRequest();
+            }
+
+            return Ok();
         }
 
         // DELETE: api/Contenido/5

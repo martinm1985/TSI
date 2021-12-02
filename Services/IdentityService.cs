@@ -12,6 +12,11 @@ using System.Text;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 using AutoMapper;
+using Microsoft.Extensions.Configuration;
+using SendGrid;
+using SendGrid.Helpers.Mail;
+using Microsoft.IdentityModel.Protocols;
+using System.Web;
 
 namespace Crud.Services
 {
@@ -24,9 +29,9 @@ namespace Crud.Services
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
         private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly IConfiguration _configuration;
 
-
-        public IdentityService (RoleManager<IdentityRole>  roleManager, UserManager<User> userManager, JWTSettigs jwtSetting, TokenValidationParameters tokenValidationParameter, ApplicationDbContext context, IMapper mapper )
+        public IdentityService (RoleManager<IdentityRole>  roleManager, IConfiguration configuration, UserManager<User> userManager, JWTSettigs jwtSetting, TokenValidationParameters tokenValidationParameter, ApplicationDbContext context, IMapper mapper )
         {
             _userManager = userManager;
             _jwtSetting = jwtSetting;
@@ -34,6 +39,7 @@ namespace Crud.Services
             _context = context;
             _mapper = mapper;
             _roleManager = roleManager;
+            _configuration = configuration;
         }
 
         public async Task<object> RegisterUser(string username, string email, string password, string name, string surname)
@@ -299,6 +305,30 @@ namespace Crud.Services
             await _userManager.UpdateAsync(user);
 
             return await this.GetUserInfoById(userId);
+
+        }
+
+        public async Task ForgotPassword(string email)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null) {
+                return;
+            }
+
+            var code = await _userManager.GeneratePasswordResetTokenAsync(user);
+
+            var webApp = _configuration.GetSection("WebApp")["Url"];
+            var apiKey = Environment.GetEnvironmentVariable("EMAIL__API_KEY", EnvironmentVariableTarget.User);
+            
+            var client = new SendGridClient(apiKey);
+            var from = new EmailAddress("creadoreu@gmail.com", "CreadoresUY");
+            var subject = "Recuperación de contraseña";
+            var to = new EmailAddress(email, user.Name);
+            var plainTextContent = $"Para restaurar tu contraseña <a href='{webApp}reset_password?user={HttpUtility.UrlEncode(user.Id)}&code={HttpUtility.UrlEncode(code)}'>presiona aquí</a>.";
+            var htmlContent = $"Para restaurar tu contraseña <a href='{webApp}reset_password?user={HttpUtility.UrlEncode(user.Id)}&code={HttpUtility.UrlEncode(code)}'>presiona aquí</a>.";
+            var msg = MailHelper.CreateSingleEmail(from, to, subject, plainTextContent, htmlContent);
+            var response = await client.SendEmailAsync(msg).ConfigureAwait(false);
+            return;
 
         }
     }

@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Crud.Data;
 using Crud.Models;
+using Crud.Services;
 
 namespace Crud.Controllers
 {
@@ -15,9 +16,11 @@ namespace Crud.Controllers
     public class FinanzaApiController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IIdentityService _identityService;
 
-        public FinanzaApiController(ApplicationDbContext context)
+        public FinanzaApiController(ApplicationDbContext context, IIdentityService identityService)
         {
+            _identityService = identityService;
             _context = context;
         }
 
@@ -25,7 +28,13 @@ namespace Crud.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Finanza>>> GetFinanza()
         {
-            return await _context.Finanza.ToListAsync();
+
+            var user = await _identityService.GetUserInfo(HttpContext.User);
+            if(user == null || user.Creador == null)
+            {
+                return Unauthorized();
+            }
+            return await _context.Finanza.Where(t => t.CreadorId == user.Id).ToListAsync();
         }
 
         // GET: api/FinanzaApi/5

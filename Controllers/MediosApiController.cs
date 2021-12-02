@@ -26,14 +26,10 @@ namespace Api.Crud.Controllers
 
         private readonly ApplicationDbContext _context;
 
-        private readonly IIdentityService _identityService;
-
         private readonly IMapper _mapper;
 
-        public MediosApiController(ApplicationDbContext context, UserManager<User> userManager,
-            IMapper mapper, IIdentityService identityService)
+        public MediosApiController(ApplicationDbContext context, UserManager<User> userManager, IMapper mapper)
         {
-            _identityService = identityService;
             _context = context;
             _userManager = userManager;
             _mapper = mapper;
@@ -59,8 +55,9 @@ namespace Api.Crud.Controllers
         public object GetMediosUser(string id)
         {
             var medios = from m in _context.MediosDePagos
-                            where m.UserId == id
-                            select m;
+                         join e in _context.EntidadesFinancieras on m.IdEntidadFinanciera equals e.Id
+                         where m.UserId == id && !m.Borrado &&  !e.Borrado
+                         select m;
 
             return JsonConvert.SerializeObject(medios);
         }
@@ -69,7 +66,7 @@ namespace Api.Crud.Controllers
         [Route("api/medios/getEntidadesFinancieras")]
         public ActionResult<IEnumerable<EntidadFinanciera>> GetEntidadesFinancieras()
         {
-            return Ok(_context.EntidadesFinancieras.ToList());
+            return Ok(_context.EntidadesFinancieras.Where(m => !m.Borrado).Select(m => m).ToList());
         }
 
         [HttpGet]
@@ -77,7 +74,7 @@ namespace Api.Crud.Controllers
         public object GetEntidadesFinancierasTarjetasCredito()
         {
             var entidades = from m in _context.EntidadesFinancieras
-                         where m.TarjetaCredito == true
+                         where m.TarjetaCredito == true && !m.Borrado
                          select m;
 
             return JsonConvert.SerializeObject(entidades.ToList());
@@ -88,7 +85,7 @@ namespace Api.Crud.Controllers
         public object GetEntidadesFinancierasTarjetasDebito()
         {
             var entidades = from m in _context.EntidadesFinancieras
-                            where m.TarjetaDebito == true
+                            where m.TarjetaDebito == true && !m.Borrado
                             select m;
 
             return JsonConvert.SerializeObject(entidades);
@@ -99,7 +96,7 @@ namespace Api.Crud.Controllers
         public object GetEntidadesFinancierasTarjetasCuenta()
         {
             var entidades = from m in _context.EntidadesFinancieras
-                            where m.Cuenta == true
+                            where m.Cuenta == true && !m.Borrado
                             select m;
 
             return JsonConvert.SerializeObject(entidades);
@@ -112,7 +109,7 @@ namespace Api.Crud.Controllers
             var user = await _userManager.GetUserAsync(HttpContext.User);
 
             //obtener el medio
-            var medios = _context.Tarjetas.Where(m => m.UserId == user.Id)
+            var medios = _context.Tarjetas.Where(m => m.UserId == user.Id && !m.Borrado)
                 .Include(m => m.EntidadFinanciera);
                        
                          
@@ -133,7 +130,7 @@ namespace Api.Crud.Controllers
             var user = await _userManager.GetUserAsync(HttpContext.User);
 
             //obtener el medio
-            var medios = _context.Cuentas.Where(m => m.UserId == user.Id)
+            var medios = _context.Cuentas.Where(m => m.UserId == user.Id && !m.Borrado)
                 .Include(m => m.EntidadFinanciera);
 
             if (medios == null)
@@ -153,7 +150,7 @@ namespace Api.Crud.Controllers
 
             //obtener el medio
             var medios = from m in _context.Paypals
-                         where m.UserId == user.Id
+                         where m.UserId == user.Id && !m.Borrado
                          select m;
 
             if (medios == null)
@@ -176,7 +173,9 @@ namespace Api.Crud.Controllers
             }
 
             //obtener el medio
-            var medio = _context.MediosDePagos.Find(id);
+            var medio = _context.MediosDePagos.
+                Where(m=> m.Id == id && !m.Borrado).
+                Select(m => m).First();
 
             if (medio == null)
             {
@@ -197,7 +196,9 @@ namespace Api.Crud.Controllers
             }
 
             //obtener el medio
-            var entidad = _context.EntidadesFinancieras.Find(id);
+            var entidad = _context.EntidadesFinancieras.
+                Where(m => m.Id == id && !m.Borrado).
+                Select(m => m).First();
 
             if (entidad == null)
             {
@@ -273,6 +274,7 @@ namespace Api.Crud.Controllers
             if (ModelState.IsValid)
             {
                 medio.FechaCreacion = DateTime.Now;
+                medio.Borrado = false;
                 _context.MediosDePagos.Add(medio);
                 _context.SaveChanges();
                 Ok();
@@ -304,7 +306,8 @@ namespace Api.Crud.Controllers
                         Telefono = entidadReq.Telefono,
                         TarjetaCredito = entidadReq.TarjetaCredito,
                         TarjetaDebito = entidadReq.TarjetaDebito,
-                        Cuenta = entidadReq.Cuenta
+                        Cuenta = entidadReq.Cuenta,
+                        Borrado = false
                     };
 
                     _context.EntidadesFinancieras.Add(entidad);
@@ -347,7 +350,8 @@ namespace Api.Crud.Controllers
                     NombreEnTarjeta = tarjetaReq.NombreEnTarjeta,
                     NumeroTarjeta = tarjetaReq.NumeroTarjeta,
                     Expiracion = tarjetaReq.Expiracion,
-                    FechaCreacion = DateTime.Now
+                    FechaCreacion = DateTime.Now,
+                    Borrado = false
                 };
 
                 _context.Tarjetas.Add(tarjeta);
@@ -384,7 +388,8 @@ namespace Api.Crud.Controllers
                     IdEntidadFinanciera = cuentaReq.IdEntidadFinanciera,
                     NumeroDeCuenta = cuentaReq.NumeroDeCuenta,
                     Sucursal = cuentaReq.Sucursal,
-                    FechaCreacion = DateTime.Now
+                    FechaCreacion = DateTime.Now,
+                    Borrado = false
                 };
 
                 _context.Cuentas.Add(cuenta);
@@ -411,6 +416,9 @@ namespace Api.Crud.Controllers
 
             }
 
+            //a arreglar
+            var EntidadFinancieraAux = _context.EntidadesFinancieras.Select(m => m.Id).First();
+
             if (ModelState.IsValid)
             {
                 var paypal = new PayPal
@@ -418,7 +426,9 @@ namespace Api.Crud.Controllers
                     Detalle = paypalReq.Detalle,
                     CorreoPaypal = paypalReq.CorreoPaypal,
                     UserId = paypalReq.IdUser,
-                    FechaCreacion = DateTime.Now
+                    FechaCreacion = DateTime.Now,
+                    IdEntidadFinanciera = EntidadFinancieraAux,
+                    Borrado = false
                 };
 
                 _context.Paypals.Add(paypal);
@@ -551,7 +561,7 @@ namespace Api.Crud.Controllers
         // DELETE api/<ValuesController>/5
         [HttpDelete]
         [Route("api/medios/borrar/{id}")]
-        public void Borrar(int id)
+        public async Task BorrarAsync(int id)
         {
             if (id == 0)
             {
@@ -566,15 +576,16 @@ namespace Api.Crud.Controllers
                 NotFound();
             }
 
-            _context.MediosDePagos.Remove(medio);
-            _context.SaveChanges();
+            medio.Borrado = true;
+            _context.MediosDePagos.Update(medio);
+            await _context.SaveChangesAsync();
             Ok();
         }
 
         // DELETE api/<ValuesController>/5
         [HttpDelete]
         [Route("api/entidad_financiera/borrar/{id}")]
-        public void BorrarEntidadFinanciera(int id)
+        public async Task BorrarEntidadFinancieraAsync(int id)
         {
             if (id == 0)
             {
@@ -589,8 +600,9 @@ namespace Api.Crud.Controllers
                 NotFound();
             }
 
-            _context.EntidadesFinancieras.Remove(entidad);
-            _context.SaveChanges();
+            entidad.Borrado = true;
+            _context.EntidadesFinancieras.Update(entidad);
+            await _context.SaveChangesAsync();
             Ok();
         }
 

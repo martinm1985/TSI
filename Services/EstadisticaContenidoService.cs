@@ -23,8 +23,11 @@ namespace Crud.Services
         public EstadisticaContenido Get(string id) =>
             _estContenido.Find(est => est.Id == id).FirstOrDefault();
 
-        public EstadisticaContenido GetByIdContenido(string idContenido) =>
-            _estContenido.Find(est => est.IdContenido == idContenido).FirstOrDefault();
+        public List<EstadisticaContenido> GetByIdContenido(int idContenido) =>
+            _estContenido.Find(est => est.IdContenido == idContenido).ToList();
+
+        public EstadisticaContenido GetByIdContenidoAndDate(int idContenido, DateTime fecha) =>
+            _estContenido.Find(est => est.IdContenido == idContenido && est.Fecha == fecha).FirstOrDefault();
 
         public EstadisticaContenido Create(EstadisticaContenido est)
         {
@@ -42,13 +45,13 @@ namespace Crud.Services
             _estContenido.DeleteOne(est => est.Id == id);
 
 
-        public void AddVisualizacion(string idContenido)
+        public void AddVisualizacion(int idContenido)
         {
-            var currentValue = GetByIdContenido(idContenido);
+            var currentValue = GetByIdContenidoAndDate(idContenido, DateTime.Today);
             if (currentValue != null)
             {
                 var filter = Builders<EstadisticaContenido>.Filter
-                    .Where(est => est.Fecha == currentValue.Fecha);
+                    .Where(est => est.Fecha == currentValue.Fecha && est.IdContenido == idContenido);
                 var update = Builders<EstadisticaContenido>.Update
                     .Set(est => est.Visualizaciones, currentValue.Visualizaciones + 1);
                 var options = new FindOneAndUpdateOptions<EstadisticaContenido>();
@@ -61,8 +64,6 @@ namespace Crud.Services
                     IdContenido = idContenido,
                     Visualizaciones = 1,
                     Fecha = DateTime.Today,
-
-
                 };
                 Create(estadisticaContenido);
             }

@@ -26,5 +26,7 @@ namespace Crud.Models
         public int IdEntidadFinanciera { get; set; }
 
         public virtual EntidadFinanciera EntidadFinanciera { get; set; } 
+
+        public bool Borrado { get; set; }
     }
 }
