@@ -318,7 +318,7 @@ namespace Crud.Services
             var code = await _userManager.GeneratePasswordResetTokenAsync(user);
 
             var webApp = _configuration.GetSection("WebApp")["Url"];
-            var apiKey = Environment.GetEnvironmentVariable("EMAIL__API_KEY", EnvironmentVariableTarget.User);
+            var apiKey = Environment.GetEnvironmentVariable("EMAIL__API_KEY");
             
             var client = new SendGridClient(apiKey);
             var from = new EmailAddress("creadoreu@gmail.com", "CreadoresUY");
