@@ -12,7 +12,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.Identity;
-using System.Web;
 
 namespace Crud.Controllers
 {
@@ -45,47 +44,6 @@ namespace Crud.Controllers
             return Ok(res);
 
         }
-
-        [HttpPost("forgotpassword")]
-        public async Task<IActionResult> ForgotPassword([FromBody] string email) {
-            await _identityService.ForgotPassword(email);
-            return Ok("Email sent");
-        }
-
-        [HttpPatch("{id}/resetpassword")]
-        public async Task<IActionResult> ResetPassword(string id, PasswrodResetRequest request)
-        {
-            var user = await _userManager.FindByIdAsync(id);
-
-            if (user == null) {
-                return NotFound();
-            }
-            var isTokenValid = await _userManager.VerifyUserTokenAsync(
-                user,
-                _userManager.Options.Tokens.PasswordResetTokenProvider,
-                "ResetPassword",
-                request.Token
-            );
-
-            if (!isTokenValid)
-            {
-                return BadRequest("Link expired");
-            }
-
-            var passwordValidator = new PasswordValidator<User>();
-            var result = await passwordValidator.ValidateAsync(_userManager, user, request.Password);
-
-            if (!result.Succeeded) {
-                return BadRequest("Password not valid");
-            }
-
-            
-            await _userManager.ResetPasswordAsync(user, request.Token, request.Password);
-
-            return Ok("Password Reseted successfully");
-            
-        }
-
 
         [HttpPost("login")]
         public async Task<IActionResult> Login (LoginRequest request)

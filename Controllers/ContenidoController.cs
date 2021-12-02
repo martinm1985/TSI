@@ -18,13 +18,11 @@ namespace Crud.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly IIdentityService _identityService;
-        private readonly EstadisticaContenidoService _estContenidoService;
 
-        public ContenidoController(ApplicationDbContext context, IIdentityService identityService, EstadisticaContenidoService estContenidoService)
+        public ContenidoController(ApplicationDbContext context, IIdentityService identityService)
         {
             _identityService = identityService;
             _context = context;
-            _estContenidoService = estContenidoService;
         }
 
         // GET: api/Contenido
@@ -194,12 +192,6 @@ namespace Crud.Controllers
                 return NotFound();
             }
 
-            try
-            {
-                _estContenidoService.AddVisualizacion(id);
-            }
-            catch (Exception){}
-
             return contenido;
         }
 
@@ -251,12 +243,6 @@ namespace Crud.Controllers
                 resultado.Descripcion = "Video";
             else if (contenido is Imagen)
                 resultado.Descripcion = "Imagen";
-
-            try
-            {
-                _estContenidoService.AddVisualizacion(id);
-            }
-            catch (Exception){}
 
             return resultado;
         }

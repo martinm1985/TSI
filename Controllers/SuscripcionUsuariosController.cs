@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Crud.Data;
 using Crud.Models;
-using Crud.Services;
 
 namespace Crud.Controllers
 {
@@ -16,12 +15,10 @@ namespace Crud.Controllers
     public class SuscripcionUsuariosController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
-        private readonly IIdentityService _identityService;
 
-        public SuscripcionUsuariosController(ApplicationDbContext context, IIdentityService identityService)
+        public SuscripcionUsuariosController(ApplicationDbContext context)
         {
             _context = context;
-            _identityService = identityService;
         }
 
         // GET: api/SuscripcionUsuarios
@@ -101,42 +98,6 @@ namespace Crud.Controllers
             await _context.SaveChangesAsync();
 
             return NoContent();
-        }
-
-        [HttpGet("mensajeria/{id}")]
-        public async Task<Boolean> puedeEnviarMensajes(string id)
-        {
-            Boolean res = false; 
-            var user = await _identityService.GetUserInfo(HttpContext.User);
-
-            if (user == null || user.Id == id) return false;
-
-            var suscripcionUsuario = _context.SuscripcionUsuario
-                                    .Include(s => s.TipoSuscripcion)
-                                    .Where(s => s.UsuarioId == user.Id)
-                                    .Where(s => s.TipoSuscripcion.CreadorId == id)
-                                    .Where(s => s.Activo).FirstOrDefault();
-            if (suscripcionUsuario != null)
-            {
-                int? suscId = suscripcionUsuario.TipoSuscripcionId;
-                while (suscId != null)
-                {
-                    var newSusc = _context.TipoSuscripcion.Find(suscId);
-                    if (newSusc.Activo && newSusc.MensajeriaActiva)
-                    {
-                        return true;
-                    }
-                    if (newSusc != null && newSusc.IncluyeTipoSuscrId != null)
-                    {
-                        suscId = newSusc.IncluyeTipoSuscrId;
-                    }
-                    else
-                    {
-                        suscId = null;
-                    }
-                }
-            }
-            return res;
         }
 
         private bool SuscripcionUsuarioExists(int id)

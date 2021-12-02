@@ -1,25 +1,20 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Crud.Models
 {
     public class PagoPayPal
     {
-        [Key]
-        public int Id { get; set; }
-
-        [ForeignKey("Pago")]
-        public int PagoId { get; set; }
-
-        public virtual Pago Pago { get; set; }
-
-        public string OrderId {get; set;}
-
+        public string IdPagoPaypal {get; set;}
+        public string Invoice_id { get; set;}
+        public string IdAutorizacion { get; set; }
         public string IdCaptura { get; set; }
+        public string Estado { get; set;}
+        public DateTime FechaTransaccion { get; set; }
+        public string IdReembolso { get; set; }
 
-        public string EstadoPago { get; set;}
-
-        public DateTime FechaPago { get; set; }
     }
 }

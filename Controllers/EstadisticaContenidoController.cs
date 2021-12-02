@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using Crud.Services;
 using Crud.Models;
-using System;
 
 namespace Crud.Controllers
 {
@@ -22,9 +21,9 @@ namespace Crud.Controllers
             _estadisticaContenido.Get();
 
         [HttpGet("{id:length(24)}", Name = "GetEstadisticaContenido")]
-        public ActionResult<List<EstadisticaContenido>> Get(int id)
+        public ActionResult<EstadisticaContenido> Get(string id)
         {
-            var est = _estadisticaContenido.GetByIdContenido(id);
+            var est = _estadisticaContenido.Get(id);
 
             if (est == null)
             {
@@ -58,9 +57,9 @@ namespace Crud.Controllers
         }
 
         [HttpPut("{idContenido}")]
-        public IActionResult AddVisualizacion(int idContenido)
+        public IActionResult AddVisualizacion(string idContenido)
         {
-            var est = _estadisticaContenido.GetByIdContenidoAndDate(idContenido, DateTime.Today);
+            var est = _estadisticaContenido.GetByIdContenido(idContenido);
 
             if (est == null)
             {

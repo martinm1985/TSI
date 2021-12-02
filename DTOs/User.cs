@@ -99,10 +99,4 @@ namespace Crud.DTOs
 
     }
 
-
-    public record PasswrodResetRequest
-    {
-        public string Password { get; set; }
-        public string Token { get; set; }
-    }
 }

@@ -24,7 +24,6 @@ namespace Crud.Models
         [ForeignKey("ConversacionId")]
         public int ConversacionId { get; set; }
 
-        public string UserSender { get; set; }
 
     }
 }

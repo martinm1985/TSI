@@ -19,7 +19,5 @@ namespace Crud.Models
         public bool TarjetaDebito { get; set; }
 
         public bool Cuenta { get; set; }
-
-        public bool Borrado { get; set; }
     }
 }

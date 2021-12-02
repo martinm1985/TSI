@@ -7,9 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Crud.Data;
 using Crud.Models;
-using Crud.Services;
-using Crud.DTOs;
-
 
 namespace Crud.Controllers
 {
@@ -18,60 +15,17 @@ namespace Crud.Controllers
     public class ConversacionApiController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
-        private readonly IIdentityService _identityService;
 
-        public ConversacionApiController(ApplicationDbContext context, IIdentityService identityService)
+        public ConversacionApiController(ApplicationDbContext context)
         {
             _context = context;
-            _identityService = identityService;
         }
 
         // GET: api/ConversacionApi
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<ConversacionDto.ConversacionGet>>> GetConversacion(string? search)
+        public async Task<ActionResult<IEnumerable<Conversacion>>> GetConversacion()
         {
-            var user = await _identityService.GetUserInfo(HttpContext.User);
-
-            var conversacion = _context.Conversacion
-                               .Include(c => c.Creador.Usuario)
-                               .Where(c => ((user.Creador == null && c.UsuarioId == user.Id) || 
-                                            (user.Creador != null && c.CreadorId == user.Creador.Id)))
-                                .Where(c => (String.IsNullOrEmpty(search) ||
-                                                (c.Creador.Usuario.UserName.Contains(search) ||
-                                                c.Creador.Usuario.Name.Contains(search) ||
-                                                c.Creador.Usuario.Surname.Contains(search))
-                                       ))
-                                .Select(item => new ConversacionDto.ConversacionGet
-                                {
-                                    Id = item.ConversacionId,
-                                    CreadorId = item.CreadorId,
-                                    UserId = item.UsuarioId,
-                                    Username = item.Creador.Usuario.UserName,
-                                    MensageId = 0,
-                                    Read = true,
-                                }).ToList();
-
-            foreach (var item in conversacion)
-            {
-                var mensaje = _context.Mensaje
-                                .Where(m => m.ConversacionId == item.Id)
-                                .OrderByDescending(m => m.FechaHora)
-                                .FirstOrDefault();
-                if (mensaje != null)
-                {
-                    item.MensageId = mensaje.MensajeId;
-                    item.Body = mensaje.CuerpoMensaje;
-                    item.FechaHora = mensaje.FechaHora.ToString();
-                    item.FechaHoraOrden = mensaje.FechaHora;
-                    item.Read = mensaje.Leido;
-                    item.UserSender = mensaje.UserSender;
-                }
-            }
-
-            conversacion = conversacion.OrderByDescending(m => m.FechaHoraOrden).ToList();
-
-            return Ok(conversacion);
-
+            return await _context.Conversacion.ToListAsync();
         }
 
         // GET: api/ConversacionApi/5

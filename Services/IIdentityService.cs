@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using Crud.DTOs;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
-using Crud.Models;
 
 namespace Crud.Services
 {
@@ -18,7 +17,5 @@ namespace Crud.Services
         Task<UserData> GetUserInfoById(string id);
         Task<UserData?> MakeAdmin(string userId);
         Task<UserData?> RemoveAdmin(string userId);
-        Task ForgotPassword(string email);
-
     }
 }

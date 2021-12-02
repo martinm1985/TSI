@@ -2,17 +2,6 @@
 using System.Collections.Generic;
 using Crud.Services;
 using Crud.Models;
-using Crud.DTOs;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore;
-using Crud.Data;
-using AutoMapper;
-using System.Security.Claims;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using System;
 
 namespace Crud.Controllers
 {
@@ -21,28 +10,18 @@ namespace Crud.Controllers
     public class EstadisticaCreadorController : ControllerBase
     {
         private readonly EstadisticaCreadorService _estadisticaCreador;
-        private readonly  IIdentityService _identityService;
 
-        public EstadisticaCreadorController(EstadisticaCreadorService estadisticaService, IIdentityService identityService)
+        public EstadisticaCreadorController(EstadisticaCreadorService estadisticaService)
         {
-                        _identityService = identityService;
-
             _estadisticaCreador = estadisticaService;
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<EstadisticaCreador>>> Get() 
-        {
-            var user = await _identityService.GetUserInfo(HttpContext.User);
-            if (user==null){
-                return Unauthorized();
-            }
-
-            return  _estadisticaCreador.Get(user.Id);
-        }
+        public ActionResult<List<EstadisticaCreador>> Get() =>
+            _estadisticaCreador.Get();
 
         [HttpGet("{id:length(24)}", Name = "GetEstadisticaCreador")]
-        public ActionResult<List<EstadisticaCreador>> Get(string id)
+        public ActionResult<EstadisticaCreador> Get(string id)
         {
             var est = _estadisticaCreador.Get(id);
 
@@ -77,20 +56,20 @@ namespace Crud.Controllers
             return NoContent();
         }
 
-        // [HttpDelete("{id:length(24)}")]
-        // public IActionResult Delete(string id)
-        // {
-        //     var est = _estadisticaCreador.Get(id);
+        [HttpDelete("{id:length(24)}")]
+        public IActionResult Delete(string id)
+        {
+            var est = _estadisticaCreador.Get(id);
 
-        //     if (est == null)
-        //     {
-        //         return NotFound();
-        //     }
+            if (est == null)
+            {
+                return NotFound();
+            }
 
-        //     _estadisticaCreador.Remove(est.Id);
+            _estadisticaCreador.Remove(est.Id);
 
-        //     return NoContent();
-        // }
+            return NoContent();
+        }
 
     }
 }
