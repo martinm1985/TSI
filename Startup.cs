@@ -24,6 +24,10 @@ using Microsoft.AspNetCore.Identity;
 using Crud.Models;
 using Crud.Permissions;
 using Microsoft.AspNetCore.Authorization;
+using Crud.Scheduler;
+using Quartz.Spi;
+using Quartz;
+using Quartz.Impl;
 
 namespace Crud
 {
@@ -52,6 +56,10 @@ namespace Crud
             services.AddSingleton<EstadisticaCreadorService>();
             services.AddSingleton<EstadisticaPlataformaService>();
 
+            services.AddSignalR(options =>
+            {
+                options.EnableDetailedErrors = true;
+            });
 
             services.AddAutoMapper(typeof(Startup));
 
@@ -59,12 +67,13 @@ namespace Crud
             services.AddControllers().AddNewtonsoftJson();
             // Asigna los valores de la sección de Paypal del archivo appsettings.json a la clase PaypalApiSetting
             services.Configure<PaypalApiSetting>(Configuration.GetSection("Paypal"));
-            services.AddCors(option =>
-                option.AddPolicy(name: MyCors, Builder =>
+            services.AddCors(options =>
+            {
+                options.AddPolicy(name: MyCors, Builder =>
                 {
-                    Builder.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin();
-                })
-            );
+                    Builder.AllowAnyHeader().AllowAnyMethod().AllowCredentials().SetIsOriginAllowed(hostname => true); 
+                });
+            });
 
             services.AddIdentity<IdentityUser, IdentityRole>()
                 .AddEntityFrameworkStores<ApplicationDbContext>();
@@ -75,7 +84,8 @@ namespace Crud
             services.AddScoped<UserManager<User>>();
             services.AddScoped<RoleManager<IdentityRole>>();
             services.AddScoped<IIdentityService, IdentityService>();
-            services.AddScoped<IPagoService, PagosService>();
+
+            services.AddSingleton<IPagoService, PagosService>();
 
             var jwtSettings = new JWTSettigs();
             Configuration.Bind(key: "JWT", jwtSettings);
@@ -187,6 +197,7 @@ namespace Crud
                 endpoints.MapControllerRoute(
                     name: "default",
                     pattern: "{controller=Home}/{action=Index}/{id?}");
+                endpoints.MapHub<ChatHub>("/chat");
             });
 
         }

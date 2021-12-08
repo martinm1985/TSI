@@ -12,7 +12,8 @@ namespace Crud.DTOs
             public int Id { get; set; }
             public string CreadorId { get; set; }
             public string UserId { get; set; }
-            public string Username { get; set; }
+            public string UsernameCreator { get; set; }
+            public string UsernameUser { get; set; }
             public int MensageId { get; set; }
             public Boolean Read { get; set;  }
             public string Body { get; set; }
@@ -38,6 +39,11 @@ namespace Crud.DTOs
             public int ConversacionId { get; set; }
             public string CreadorId { get; set; }
             public string Body { get; set; }
+        }
+
+        public record ConnectionChat
+        {
+            public string Id { get; set; }
         }
 
     }

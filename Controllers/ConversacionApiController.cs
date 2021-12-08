@@ -32,8 +32,11 @@ namespace Crud.Controllers
         {
             var user = await _identityService.GetUserInfo(HttpContext.User);
 
+            if (user == null) return BadRequest();
+
             var conversacion = _context.Conversacion
                                .Include(c => c.Creador.Usuario)
+                               .Include(c => c.Usuario)
                                .Where(c => ((user.Creador == null && c.UsuarioId == user.Id) || 
                                             (user.Creador != null && c.CreadorId == user.Creador.Id)))
                                 .Where(c => (String.IsNullOrEmpty(search) ||
@@ -46,7 +49,8 @@ namespace Crud.Controllers
                                     Id = item.ConversacionId,
                                     CreadorId = item.CreadorId,
                                     UserId = item.UsuarioId,
-                                    Username = item.Creador.Usuario.UserName,
+                                    UsernameCreator = item.Creador.Usuario.UserName,
+                                    UsernameUser = item.Usuario.UserName,
                                     MensageId = 0,
                                     Read = true,
                                 }).ToList();

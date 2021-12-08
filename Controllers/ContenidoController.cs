@@ -27,13 +27,6 @@ namespace Crud.Controllers
             _estContenidoService = estContenidoService;
         }
 
-        // GET: api/Contenido
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Contenido>>> GetContenido()
-        {
-            return Ok(await _context.Contenido.ToListAsync());
-        }
-
         // GET: api/Contenido/search
         [HttpGet("search")]
         public async Task<ActionResult<IEnumerable<Object>>> GetContenidoSearch(string? search)
@@ -76,6 +69,33 @@ namespace Crud.Controllers
                                    categoriaNombre = item.Categoria.Nombre
                                }).Take(5);
             }
+
+            return await contenidos.AsQueryable().ToListAsync();
+        }
+
+        // GET: api/Contenido/search
+        [HttpGet("creador")]
+        public async Task<ActionResult<IEnumerable<Object>>> GetAllContenidoCreador(string id, int page, int pageSize)
+        {
+            if (id == null || id == "") return BadRequest();
+
+            var contenidos = _context.Contenido
+                               .Where(c => (!c.Bloqueado))
+                               .Include(c => c.Categoria)
+                               .Include(c => c.Creador)
+                               .Where(c => c.CreadorId == id)
+                               .Select(item => new
+                               {
+                                   id = item.Id,
+                                   username = item.Creador.Usuario.UserName,
+                                   titulo = item.Titulo,
+                                   descripcion = item.Descripcion,
+                                   fechaCreacion = item.FechaCreacion.ToShortDateString(),
+                                   categoriaId = item.CategoriaId,
+                                   categoriaNombre = item.Categoria.Nombre
+                               })
+                               .Skip((page - 1) * pageSize)
+                               .Take(pageSize);
 
             return await contenidos.AsQueryable().ToListAsync();
         }
@@ -132,9 +152,9 @@ namespace Crud.Controllers
                               FechaInicio = liveStream.FechaInicio.ToShortDateString(),
                               FechaFin = liveStream.FechaFin.ToShortDateString(),
                               SuscripcionId = tipoSusc.Id,
-                          })
-                          .Skip((page - 1) * pageSize)
-                          .Take(pageSize);
+                          });
+                          
+            if (user != null && user.isAdministrador) return Ok(result);
 
             var suscripcionUsuario = _context.SuscripcionUsuario
                                     .Where(s => s.UsuarioId == user.Id)
@@ -178,6 +198,7 @@ namespace Crud.Controllers
                     }
                 }
             }
+            contenidoResult = contenidoResult.Skip((page - 1) * pageSize).Take(pageSize).ToList();
 
             return Ok(contenidoResult);
         }
@@ -212,7 +233,7 @@ namespace Crud.Controllers
             var resultado = new ContenidoDto.ContenidoCast
             {
                Cast = -1,
-               Descripcion = "",
+               Descripcion = "Contenido bloqueado.",
             };
 
             var contenido = await _context.Contenido.FindAsync(id);
@@ -221,19 +242,44 @@ namespace Crud.Controllers
                 resultado.Descripcion = "Contenido no encontrado";
                 return resultado;
             }
-            // Chequeo si el usuario puede ver el contenido 
-            var suscripcionContenido = _context.TipoSuscripcion
-                                 .Where(s => s.Id == contenido.TipoSuscripcionId).FirstOrDefault();
-            if (suscripcionContenido.Precio != 0)
+
+            if (!(user != null && (user.Id == contenido.CreadorId || user.isAdministrador)))
             {
-                // Si no es público chequeo que este suscripto  // hacerlo recursivo 
-                var susUsuario = _context.SuscripcionUsuario
-                                    .Where(s => (s.TipoSuscripcionId == suscripcionContenido.Id
-                                        || s.TipoSuscripcionId == suscripcionContenido.IncluyeTipoSuscrId)).FirstOrDefault();
-                if (susUsuario == null)
+                // Chequeo si el usuario puede ver el contenido 
+                var suscripcionContenido = _context.TipoSuscripcion
+                                     .Where(s => s.Id == contenido.TipoSuscripcionId).FirstOrDefault();
+
+                if (suscripcionContenido != null)
                 {
-                    resultado.Descripcion = "Contenido bloqueado";
-                    return resultado;
+                    if (user == null) return resultado;
+
+                    // Si no es público chequeo que el usuario logueado tenga una suscripcion con el creador
+                    var suscripcionUsuario = _context.SuscripcionUsuario
+                                               .Include(s => s.TipoSuscripcion)
+                                                .Where(s => s.UsuarioId == user.Id)
+                                                .Where(s => s.TipoSuscripcion.CreadorId == contenido.CreadorId)
+                                                .Where(s => s.Activo).FirstOrDefault();
+
+                    if (suscripcionUsuario == null) return resultado;
+
+                    if (suscripcionUsuario.TipoSuscripcionId != contenido.TipoSuscripcionId)
+                    {
+                        // Esta incluido ? 
+                        int? suscId = suscripcionUsuario.TipoSuscripcionId;
+                        while (suscId != null && suscId != contenido.TipoSuscripcionId)
+                        {
+                            var addSusc = _context.TipoSuscripcion.Find(suscId);
+                            if (addSusc != null && addSusc.IncluyeTipoSuscrId != null)
+                            {
+                                suscId = addSusc.IncluyeTipoSuscrId;
+                            }
+                            else
+                            {
+                                suscId = null;
+                                return resultado;
+                            }
+                        }
+                    }
                 }
             }
 

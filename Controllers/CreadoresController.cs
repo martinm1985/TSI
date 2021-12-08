@@ -57,7 +57,8 @@ namespace Crud.Controllers
         public async Task<ActionResult<IEnumerable<Object>>> GetCreadoresSearch(string? search)
         {
             var creadores = _context.Creadores
-                               .Include(c => c.Usuario)
+                                .Where(c => c.Usuario.LockoutEnd == null)
+                                .Include(c => c.Usuario)
                                 .Select(item => new
                                 {
                                     userid = item.UserId,
@@ -94,7 +95,7 @@ namespace Crud.Controllers
         {
             var creador = _mapper.Map<UserData>(
                 await _context.Usuarios
-                .Where(c => c.Id == id)
+                .Where(c => c.Id == id && c.LockoutEnd == null)
                 .Include(s => s.Creador)
                 .Include(c => c.Creador.Categoria1)
                 .Include(c => c.Creador.Categoria2)
@@ -119,6 +120,13 @@ namespace Crud.Controllers
                     {
                         creador.Creador.esSeguido = userModel.Siguiendo.Where(u => u.CreadorId == id).FirstOrDefault() != null;
                     }
+
+                    creador.IdTipoSucripcionUsuario = await (from s in _context.SuscripcionUsuario
+                                                       join t in _context.TipoSuscripcion on s.TipoSuscripcionId equals t.Id
+                                                       where creador.Id == t.CreadorId && s.UsuarioId == user.Id && s.Activo
+                                                       select t.Id).FirstOrDefaultAsync();
+
+                    Console.WriteLine(creador.IdTipoSucripcionUsuario);
                 }
             }
             catch (Exception) { }
@@ -133,6 +141,59 @@ namespace Crud.Controllers
             return creador;
         }
 
+        [HttpGet("images/{id}")]
+        public async Task<ActionResult<Object>> GetCreadorImages(string id)
+        {
+            var creador = _context.Creadores.Find(id);
+            if (creador == null) return BadRequest();
+            
+            string imagen = "";
+            string imagePortada = "";
+
+            try
+            {
+                if (creador.Imagen != null && creador.Imagen != "")
+                {
+                    imagen = Data.FTPElastic.GetImageBlob(creador.Imagen);
+                }
+            } catch { };
+            try
+            { 
+                if (creador.ImagePortada != null && creador.ImagePortada != "")
+                {
+                    imagePortada = Data.FTPElastic.GetImageBlob(creador.ImagePortada);
+                }
+            }
+            catch { };
+
+            var tipoSusc = _context.TipoSuscripcion
+                                .Where(t => t.CreadorId == creador.Id).ToList();
+
+            List<FileDto.FileSuscripcion> suscripcion = new List<FileDto.FileSuscripcion>();
+            foreach (var t in tipoSusc)
+            {
+                var aux = new FileDto.FileSuscripcion
+                {
+                    Id = t.Id,
+                    Data = "",
+                };
+                try
+                {
+                    if (t.Imagen != null && t.Imagen != "")
+                    {
+                        aux.Data = Data.FTPElastic.GetImageBlob(t.Imagen);
+                    }
+                } catch { };
+                suscripcion.Add(aux);
+            }
+
+            return new
+            {
+                imagen,
+                imagePortada,
+                suscripcion,
+            };
+        }
 
         // POST api/<CreadoresController>
         [HttpPost("register")]
@@ -144,8 +205,8 @@ namespace Crud.Controllers
             var creador = new Creador
             {
                 Descripcion = creadorRegister.Descripcion,
-                Imagen = creadorRegister.Imagen,
-                ImagePortada = creadorRegister.ImagePortada,
+                Imagen = "", 
+                ImagePortada = "", 
                 Biografia = creadorRegister.Biografia,
                 VideoYoutube = creadorRegister.VideoYoutube,
                 MsjBienvenidaGral = creadorRegister.MsjBienvenidaGral,
@@ -154,6 +215,24 @@ namespace Crud.Controllers
                 UserId = user.Id,
                 Id = user.Id,
             };
+            try
+            {
+                if (creadorRegister.Imagen != null && creadorRegister.Imagen.Extension != "")
+                {
+                    var res = Data.FTPElastic.FileUpload(creadorRegister.Imagen);
+                    creador.Imagen = res.ToString() + "." + creadorRegister.Imagen.Extension;
+                }
+            }
+            catch { BadRequest(); }
+            try
+            {
+                if (creadorRegister.ImagePortada != null && creadorRegister.ImagePortada.Extension != "")
+                {
+                    var res = Data.FTPElastic.FileUpload(creadorRegister.ImagePortada);
+                    creador.ImagePortada = res.ToString() + "." + creadorRegister.ImagePortada.Extension;
+                }
+            }
+            catch { BadRequest(); }
 
             int tipoId = int.Parse(_context.Parametros.Find("SUSCDEFECTO1").Valor);
             var tipo1 = _context.TipoSuscripcion.Find(tipoId);

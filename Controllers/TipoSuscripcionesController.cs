@@ -97,9 +97,9 @@ namespace Crud.Controllers
             return tipoSuscripcion;
         }
 
-        // PUT: api/TipoSuscripciones/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
+            // PUT: api/TipoSuscripciones/5
+            // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+            [HttpPut("{id}")]
         public async Task<IActionResult> PutTipoSuscripcion(int id, SuscripcionDto.TipoSuscripcionDto request)
         {
             if (id != request.Id)
@@ -112,11 +112,23 @@ namespace Crud.Controllers
             tipoSuscripcion.Precio = request.Precio;
             tipoSuscripcion.Activo = request.Activo;
             tipoSuscripcion.Beneficios = request.Beneficios;
-            tipoSuscripcion.Imagen = request.Imagen;
+            tipoSuscripcion.Imagen = "";
             tipoSuscripcion.MensajeBienvenida = request.MensajeBienvenida;
             tipoSuscripcion.MensajeriaActiva = request.MensajeriaActiva;
             tipoSuscripcion.IncluyeTipoSuscrId = request.IncluyeTipoSuscrId;
             tipoSuscripcion.VideoBienvenida = request.VideoBienvenida;
+            if (request.ImagenFile != null && request.ImagenFile.Extension != "")
+            {
+                try
+                {
+                    var res = Data.FTPElastic.FileUpload(request.ImagenFile);
+                    tipoSuscripcion.Imagen = res.ToString() + "." + request.ImagenFile.Extension;
+                }
+                catch
+                {
+                    return BadRequest();
+                }
+            }
             _context.Entry(tipoSuscripcion).State = EntityState.Modified;
 
             try
@@ -151,13 +163,25 @@ namespace Crud.Controllers
                 Precio = request.Precio,
                 Activo = request.Activo,
                 Beneficios = request.Beneficios,
-                Imagen = request.Imagen,
+                Imagen = "", 
                 MensajeBienvenida = request.MensajeBienvenida,
                 MensajeriaActiva = request.MensajeriaActiva,
                 IncluyeTipoSuscrId = null,
                 VideoBienvenida = request.VideoBienvenida,
                 CreadorId = user.Id
             };
+            if (request.ImagenFile != null && request.ImagenFile.Extension != "")
+            {
+                try
+                {
+                    var res = Data.FTPElastic.FileUpload(request.ImagenFile);
+                    newTipoSuscripcion.Imagen = res.ToString() + "." + request.ImagenFile.Extension;
+                }
+                catch
+                {
+                    return BadRequest();
+                }
+            }
 
             _context.TipoSuscripcion.Add(newTipoSuscripcion);
             await _context.SaveChangesAsync();

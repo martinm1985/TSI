@@ -9,6 +9,7 @@ using Crud.Data;
 using Crud.Models;
 using Crud.DTOs;
 using Crud.Services;
+using Microsoft.AspNetCore.SignalR;
 
 namespace Crud.Controllers
 {
@@ -18,20 +19,22 @@ namespace Crud.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly IIdentityService _identityService;
+        private IHubContext<ChatHub> _hubContext;
 
-        public MensajeApiController(ApplicationDbContext context, IIdentityService identityService)
+        public MensajeApiController(ApplicationDbContext context, IIdentityService identityService, IHubContext<ChatHub> hubContext)
         {
             _context = context;
             _identityService = identityService;
+            _hubContext = hubContext;
         }
 
         // GET: api/MensajeApi
         [HttpGet("list/{conversacionId}")]
-        public async Task<ActionResult<IEnumerable<ConversacionDto.MensajesGet>>> GetMensajeConversacion(int conversacionId)
+        public async Task<ActionResult<IEnumerable<ConversacionDto.MensajesGet>>> GetMensajeConversacion(int conversacionId, int page, int pageSize)
         {
             return await   _context.Mensaje
                             .Where(m => m.ConversacionId == conversacionId)
-                            .OrderBy(m => m.FechaHora)
+                            .OrderByDescending(m => m.FechaHora)
                             .Select(m => new ConversacionDto.MensajesGet
                             {
                                 MensajeId = m.MensajeId,
@@ -41,14 +44,26 @@ namespace Crud.Controllers
                                 ConversacionId = m.ConversacionId,
                                 UserSender = m.UserSender,
                             })
+                            .Skip((page - 1) * pageSize)
+                            .Take(pageSize)
                             .ToListAsync();
         }
 
         // GET: api/MensajeApi/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Mensaje>> GetMensaje(int id)
+        public async Task<ActionResult<ConversacionDto.MensajesGet>> GetMensaje(int id)
         {
-            var mensaje = await _context.Mensaje.FindAsync(id);
+            var mensaje = _context.Mensaje
+                                    .Where(m => m.MensajeId == id)
+                                    .Select(m => new ConversacionDto.MensajesGet
+                                    {
+                                        MensajeId = m.MensajeId,
+                                        DateTimeSent = m.FechaHora.ToShortDateString() + " " + m.FechaHora.ToShortTimeString(),
+                                        Body = m.CuerpoMensaje,
+                                        Read = m.Leido,
+                                        ConversacionId = m.ConversacionId,
+                                        UserSender = m.UserSender,
+                                    }).FirstOrDefault();
 
             if (mensaje == null)
             {
@@ -95,6 +110,8 @@ namespace Crud.Controllers
         public async Task<ActionResult<ConversacionDto.MensajeAdd>> PostMensaje(ConversacionDto.MensajeAdd mensaje)
         {
             var user = await _identityService.GetUserInfo(HttpContext.User);
+
+            if (user == null) return BadRequest();
           
             int convId = mensaje.ConversacionId;
 
@@ -143,6 +160,14 @@ namespace Crud.Controllers
             };
             _context.Mensaje.Add(msg);
             await _context.SaveChangesAsync();
+            
+            try
+            {
+                var conversacion = _context.Conversacion.Find(convId);
+                await _hubContext.Clients.Group(conversacion.CreadorId).SendAsync("ReceiveMessage", msg);
+                await _hubContext.Clients.Group(conversacion.UsuarioId).SendAsync("ReceiveMessage", msg);
+            } catch { };
+
 
             return Ok(msg);
         }

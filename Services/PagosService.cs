@@ -6,16 +6,22 @@ using Crud.Models;
 using Crud.Data;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
+using Quartz;
+using Crud.Scheduler;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Crud.Services
 {
     public class PagosService : IPagoService
     {
+        private readonly ILogger<NotificationJob> _logger;
         private readonly ApplicationDbContext _context;
 
-        public PagosService(ApplicationDbContext context)
+        public PagosService(ILogger<NotificationJob> logger, IServiceScopeFactory scopeFactory)
         {
-            _context = context;
+            _logger = logger;
+            _context = scopeFactory.CreateScope().ServiceProvider.GetRequiredService<ApplicationDbContext>(); ;
         }
 
 
@@ -151,6 +157,199 @@ namespace Crud.Services
             }
 
         }
+
+        public async Task CobroDePagos()
+        {
+            var pagos = await (from u in _context.Users
+                                join m in _context.MediosDePagos on u.Id equals m.UserId
+                                join s in _context.SuscripcionUsuario on u.Id equals s.UsuarioId
+                                join p in _context.Pagos on s.TipoSuscripcionId equals p.TipoSuscripcionId
+                                join t in _context.TipoSuscripcion on s.TipoSuscripcionId equals t.Id
+                                where u.LockoutEnd == null && s.Activo && !p.Aprobado && !m.Borrado && m.Activo
+                                && !p.EsPayPal
+                                && p.Fecha <= DateTime.Now && !p.Devolucion
+                                select new {
+                                    idPago = p.IdPago,
+                                    monto = t.Precio,
+                                }).Distinct().ToListAsync();
+            var i = 0;
+
+            foreach (var pago in pagos)
+            {
+                var pagoUpdate = await _context.Pagos.FindAsync(pago.idPago);
+                pagoUpdate.Aprobado = true;
+
+                _context.Pagos.Update(pagoUpdate);
+
+                await ActualizarFinanzaPagoAsync(pagoUpdate.Monto, pagoUpdate.TipoSuscripcionId);
+
+                var siguiente = new Pago
+                {
+
+                    IdMedioDePago = pagoUpdate.IdMedioDePago,
+                    Fecha = pagoUpdate.Fecha.AddMonths(1),
+                    Aprobado = false,
+                    Monto = (decimal)((double)pago.monto),
+                    Moneda = pagoUpdate.Moneda,
+                    Devolucion = pagoUpdate.Devolucion,
+                    EsSuscripcion = pagoUpdate.EsSuscripcion,
+                    IdPagoDevolucion = pagoUpdate.IdPagoDevolucion,
+                    EsPayPal = pagoUpdate.EsPayPal,
+                    TipoSuscripcionId = pagoUpdate.TipoSuscripcionId,
+                    ObservacionDevolucion = pagoUpdate.ObservacionDevolucion
+                };
+                i++;
+                await _context.Pagos.AddAsync(siguiente);
+            }
+
+            try
+            {
+                Console.WriteLine($" Se cobraron y generaron {i} pagos nuevos.");
+                await _context.SaveChangesAsync();
+
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+
+            }
+
+        }
+
+        public static decimal MonthDifference(DateTime FechaFin, DateTime FechaInicio)
+        {
+            return Math.Abs((FechaFin.Month - FechaInicio.Month) + 12 * (FechaFin.Year - FechaInicio.Year));
+
+        }
+
+        public async Task SuscripcionesNoPagas()
+        {
+            var suscripciones = await (from u in _context.Users
+                                       join s in _context.SuscripcionUsuario on u.Id equals s.UsuarioId
+                                       where u.LockoutEnd == null
+                                       && s.FechaFin <= DateTime.Now
+                                       select s).Distinct().ToListAsync();
+            var i = 0;
+
+
+            foreach (var suscripcion in suscripciones)
+            {
+                var meses = (int) Math.Truncate(MonthDifference(DateTime.Now, suscripcion.FechaInicio));
+                var fechapago = suscripcion.FechaInicio.AddMonths(meses);
+
+                if ( meses != 0 && (fechapago > DateTime.Now && fechapago < DateTime.Now.AddDays(1)))
+                {
+                    var query = (from p in _context.Pagos
+                                 join m in _context.MediosDePagos on p.IdMedioDePago equals m.Id
+                                 where
+                                 m.UserId == suscripcion.UsuarioId &&
+                                 p.TipoSuscripcionId == suscripcion.TipoSuscripcionId &&
+                                 (p.Fecha < fechapago.AddDays(1) &&
+                                 p.Fecha >= fechapago) &&
+                                 p.Aprobado
+                                 select p).FirstAsync();
+
+                    if (query == null && suscripcion.Activo)
+                    {
+                        var suscripcionUpdate = await _context.SuscripcionUsuario.FindAsync(suscripcion.Id);
+                        suscripcionUpdate.Activo = false;
+                        _context.SuscripcionUsuario.Update(suscripcionUpdate);
+                    }else if (!suscripcion.Activo)
+                    {
+                        var suscripcionUpdate = await _context.SuscripcionUsuario.FindAsync(suscripcion.Id);
+                        suscripcionUpdate.Activo = true;
+                        _context.SuscripcionUsuario.Update(suscripcionUpdate);
+                    }
+                }
+                
+                i++;
+            };
+
+            try
+            {
+                Console.WriteLine($" Se activaron/desactivaron {i} suscripciones nuevas por pagos.");
+                await _context.SaveChangesAsync();
+
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+
+            }
+
+
+        }
+
+        public async Task ActualizacionSuscripciones()
+        {
+            var suscripciones = await (from u in _context.Users
+                               join s in _context.SuscripcionUsuario on u.Id equals s.UsuarioId
+                               where u.LockoutEnd == null && s.Activo
+                               && s.FechaFin <= DateTime.Now
+                               select s.Id).Distinct().ToListAsync();
+            var i = 0;
+
+            foreach(var suscripcion in suscripciones)
+            {
+                var suscripcionUpdate = await _context.SuscripcionUsuario.FindAsync(suscripcion);
+                suscripcionUpdate.Activo = false;
+                _context.SuscripcionUsuario.Update(suscripcionUpdate);
+                i++;
+            };
+
+            try
+            {
+                Console.WriteLine($" Se vencieron {i} suscripciones nuevas.");
+                await _context.SaveChangesAsync();
+
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+
+            }
+
+
+        }
+
+        public async Task ActualizacionTarjetas()
+        {
+            var tarjetas = await (from t in _context.Tarjetas
+                                  select t.Id).Distinct().ToListAsync();
+            var i = 0;
+
+            foreach (var tarjeta in tarjetas)
+            {
+                var tarjetaUpdate = await _context.Tarjetas.FindAsync(tarjeta);
+                var actualizar =
+                    tarjetaUpdate.Activo != (tarjetaUpdate.Expiracion.Year > DateTime.Now.Year
+                    || (tarjetaUpdate.Expiracion.Year == DateTime.Now.Year
+                    && tarjetaUpdate.Expiracion.Month >= DateTime.Now.Month));
+
+                if (actualizar)
+                {
+                    tarjetaUpdate.Activo = !tarjetaUpdate.Activo;
+                    _context.Tarjetas.Update(tarjetaUpdate);
+                    i++;
+                }
+            };
+            if (i > 0)
+            {
+                try
+                {
+                    await _context.SaveChangesAsync();
+
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+
+                }
+
+            };
+
+            Console.WriteLine($" Se activaron/vencieron {i} tarjetas nuevas.");
+
+
+
+        }
+
 
     }
 }

@@ -153,6 +153,7 @@ namespace Crud.Data
             };
             modelbuilder.Entity<Categoria>().HasData(categoria1);
 
+
             Categoria categoria2 = new()
             {
                 Id = 2,

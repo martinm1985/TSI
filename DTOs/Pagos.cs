@@ -4,7 +4,7 @@ namespace Crud.DTOs
     public class PagosRequest
     {
         public int Id { get; set; }
-        public int IdMedioDePago { get; set; }
+        public int MedioDePagoId { get; set; }
         public Decimal Monto { get; set; }
         public string Moneda { get; set; }
         public bool Devolucion { get; set; }
@@ -32,5 +32,7 @@ namespace Crud.DTOs
         public int IdPagoDevolucion { get; set; }
         public bool EsPayPal { get; set; }
         public string IdCaptura { get; set; }
+        public string NombreUsuario { get; set; }
+        public string DetalleSuscripcion { get; set; }
     }
 }

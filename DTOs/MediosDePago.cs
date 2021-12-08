@@ -9,6 +9,7 @@ namespace Crud.DTOs
         public string IdUser { get; set; }
         public string Detalle { get; set; }
         public string CorreoPaypal { get; set; }
+        public bool Activo { get; set; }
 
     }
 
@@ -22,6 +23,7 @@ namespace Crud.DTOs
         public string NombreEnTarjeta { get; set; }
         public string NumeroTarjeta { get; set; }
         public DateTime Expiracion { get; set; }
+        public bool Activo { get; set; }
     }
 
     public class CuentaRequest
@@ -32,6 +34,7 @@ namespace Crud.DTOs
         public int IdEntidadFinanciera { get; set; }
         public string NumeroDeCuenta { get; set; }
         public string Sucursal { get; set; }
+        public bool Activo { get; set; }
 
     }
 
@@ -44,6 +47,7 @@ namespace Crud.DTOs
         public bool TarjetaCredito { get; set; }
         public bool TarjetaDebito { get; set; }
         public bool Cuenta { get; set; }
+        public bool Activo { get; set; }
 
     }
 
@@ -58,6 +62,7 @@ namespace Crud.DTOs
         public string NombreEnTarjeta { get; set; }
         public string NumeroTarjeta { get; set; }
         public DateTime Expiracion { get; set; }
+        public bool Activo { get; set; }
     }
 
     public class CuentaResponse
@@ -69,6 +74,7 @@ namespace Crud.DTOs
         public string EntidadFinanciera { get; set; }
         public string NumeroDeCuenta { get; set; }
         public string Sucursal { get; set; }
+        public bool Activo { get; set; }
 
     }
 }

@@ -29,6 +29,8 @@ namespace Crud.DTOs
 
             public int? IncluyeTipoSuscrId { get; set; }
 
+            public FileDto.File ImagenFile { get; set; }
+
         }
     }
 }

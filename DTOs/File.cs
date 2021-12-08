@@ -18,5 +18,11 @@ namespace Crud.DTOs
             public string Extension { get; set; }
         }
 
+        public record FileSuscripcion
+        {
+            public int Id { get; set; }
+            public string Data { get; set; }
+        }
+
     }
 }

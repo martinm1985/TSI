@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Crud</name>
+    </assembly>
+    <members>
+        <member name="M:Api.Crud.Controllers.MediosApiController.GetMedios">
+            <summary>
+            Devuelve todos los medios existentes
+            </summary>
+            <returns></returns>
+        </member>
+    </members>
+</doc>

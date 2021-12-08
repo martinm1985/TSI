@@ -29,15 +29,19 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
+    <PackageReference Include="Quartz" Version="3.3.3" />
   </ItemGroup>
   <ItemGroup>
     <None Remove="RestSharp" />
     <None Remove="MongoDB.Driver" />
     <None Remove="Microsoft.EntityFrameworkCore.Tools" />
     <None Remove="Migrations\" />
+    <None Remove="Quartz" />
+    <None Remove="Scheduler\" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Migrations\" />
+    <Folder Include="Scheduler\" />
   </ItemGroup>
     <PropertyGroup>
 	    <GenerateDocumentationFile>true</GenerateDocumentationFile>

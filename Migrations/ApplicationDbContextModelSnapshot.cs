@@ -314,6 +314,9 @@ namespace Crud.Migrations
                         .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
+                    b.Property<bool>("Activo")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("Borrado")
                         .HasColumnType("bit");
 
@@ -387,6 +390,9 @@ namespace Crud.Migrations
                         .HasColumnType("bit");
 
                     b.Property<bool>("Devolucion")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("Devuelto")
                         .HasColumnType("bit");
 
                     b.Property<bool>("EsPayPal")
@@ -723,16 +729,16 @@ namespace Crud.Migrations
                         {
                             Id = "1",
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "7321faff-dbc7-43a7-8ebc-194c7c9f92bf",
+                            ConcurrencyStamp = "477096ec-6217-43a3-a15d-fb24a73f936f",
                             Email = "creadoresuyadmin@gmail.com",
                             EmailConfirmed = false,
                             LockoutEnabled = false,
                             Name = "Creadores",
                             NormalizedEmail = "CREADORESUYADMIN@GMAIL.COM",
                             NormalizedUserName = "CREADORESUY",
-                            PasswordHash = "AQAAAAEAACcQAAAAEMTkZf8FYc0fad10dZlVCk2gVtc5VxdcgT0M2H7Nn1tspZC4fJiNyxlZdEQBRSCnbQ==",
+                            PasswordHash = "AQAAAAEAACcQAAAAECy45K6wsHZ67R/N/EMkP+Dyn12/pxB9ZI2pw6oOhknQUme+0wdmp9sKzxm1LA/ewA==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "5cc8d9de-f739-48cb-96b1-08d4b20c833e",
+                            SecurityStamp = "0d14d525-bceb-42b8-b281-73a5a63a5bf9",
                             Surname = "UY",
                             TwoFactorEnabled = false,
                             UserName = "CreadoresUY",
@@ -785,7 +791,7 @@ namespace Crud.Migrations
                         new
                         {
                             Id = "1",
-                            ConcurrencyStamp = "3870dbc9-ed1b-4271-800e-3a9e45fa4605",
+                            ConcurrencyStamp = "bba3b178-cdb5-45e3-a44a-8b7139cd87bc",
                             Name = "Administrator",
                             NormalizedName = "ADMINISTRATOR"
                         });

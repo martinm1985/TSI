@@ -50,15 +50,19 @@ namespace Crud.DTOs
         public bool isAdministrador { get; set; }
         public string Username { get; set; }
         public string Surname { get; set; }
+        public int IdTipoSucripcionUsuario { get; set; }
 
         public CreadorData Creador {get; set;} 
+
+        public FileDto.File Imagen { get; set; }
+        public FileDto.File ImagePortada { get; set; }
     }
 
     public record CreadorRegister
     {
         public string Descripcion { get; set; }
-        public string Imagen { get; set; }
-        public string ImagePortada { get; set; }
+        public FileDto.File Imagen { get; set; }
+        public FileDto.File ImagePortada { get; set; }
         public string Biografia { get; set; }
         public string VideoYoutube { get; set; }
         public string MsjBienvenidaGral { get; set; }

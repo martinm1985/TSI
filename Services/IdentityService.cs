@@ -171,6 +171,16 @@ namespace Crud.Services
 
             var user = await _userManager.FindByEmailAsync(email);
 
+            var lockoutDate = await _userManager.GetLockoutEndDateAsync(user);
+
+            if (lockoutDate != null && DateTimeOffset.Compare((DateTimeOffset)lockoutDate, DateTimeOffset.UtcNow) > 0)
+            {
+                return new ResponseFailure
+                {
+                    Error = "Usuario bloqueado"
+                };
+            }
+
             if (user == null)
             {
                 return new ResponseFailure
@@ -319,15 +329,17 @@ namespace Crud.Services
 
             var webApp = _configuration.GetSection("WebApp")["Url"];
             var apiKey = Environment.GetEnvironmentVariable("EMAIL__API_KEY");
-            
-            var client = new SendGridClient(apiKey);
-            var from = new EmailAddress("creadoreu@gmail.com", "CreadoresUY");
-            var subject = "Recuperación de contraseña";
-            var to = new EmailAddress(email, user.Name);
-            var plainTextContent = $"Para restaurar tu contraseña <a href='{webApp}reset_password?user={HttpUtility.UrlEncode(user.Id)}&code={HttpUtility.UrlEncode(code)}'>presiona aquí</a>.";
-            var htmlContent = $"Para restaurar tu contraseña <a href='{webApp}reset_password?user={HttpUtility.UrlEncode(user.Id)}&code={HttpUtility.UrlEncode(code)}'>presiona aquí</a>.";
-            var msg = MailHelper.CreateSingleEmail(from, to, subject, plainTextContent, htmlContent);
-            var response = await client.SendEmailAsync(msg).ConfigureAwait(false);
+            if (apiKey != null)
+            {
+                var client = new SendGridClient(apiKey);
+                var from = new EmailAddress("creadoreu@gmail.com", "CreadoresUY");
+                var subject = "Recuperación de contraseña";
+                var to = new EmailAddress(email, user.Name);
+                var plainTextContent = $"Para restaurar tu contraseña <a href='{webApp}reset_password?user={HttpUtility.UrlEncode(user.Id)}&code={HttpUtility.UrlEncode(code)}'>presiona aquí</a>.";
+                var htmlContent = $"Para restaurar tu contraseña <a href='{webApp}reset_password?user={HttpUtility.UrlEncode(user.Id)}&code={HttpUtility.UrlEncode(code)}'>presiona aquí</a>.";
+                var msg = MailHelper.CreateSingleEmail(from, to, subject, plainTextContent, htmlContent);
+                var response = await client.SendEmailAsync(msg).ConfigureAwait(false);
+            }
             return;
 
         }

@@ -15,5 +15,12 @@ namespace Crud.Services
 
         public Task ActualizarFinanzaDevolucionAsync(int idPago);
 
+        public Task CobroDePagos();
+
+        public Task ActualizacionSuscripciones();
+
+        public Task ActualizacionTarjetas();
+
+        public Task SuscripcionesNoPagas();
     }
 }

@@ -28,5 +28,7 @@ namespace Crud.Models
         public virtual EntidadFinanciera EntidadFinanciera { get; set; } 
 
         public bool Borrado { get; set; }
+
+        public bool Activo { get; set; }
     }
 }

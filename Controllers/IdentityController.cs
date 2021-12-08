@@ -158,5 +158,36 @@ namespace Crud.Controllers
             return Ok(user);
         }
 
+        [HttpPost("blockUser/{id}")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "AdminAuthorization")]
+        public async Task<ActionResult> BlockUser(string id)
+        {
+            var user = await _userManager.FindByIdAsync(id);
+            if (user == null)
+            {
+                return NotFound();
+            }
+            var isLockoutEnabled = await _userManager.GetLockoutEnabledAsync(user);
+
+            if (!isLockoutEnabled)
+            {
+               
+                return BadRequest("El usuario no puede ser bloqueado");
+            }
+
+            var isBlocked = user.LockoutEnd != null &&
+                            DateTimeOffset.Compare((DateTimeOffset)user.LockoutEnd, DateTimeOffset.UtcNow) > 0;
+
+            if (isBlocked)
+            {
+                await _userManager.SetLockoutEndDateAsync(user, null);
+            }
+            else
+            {
+                await _userManager.SetLockoutEndDateAsync(user, DateTime.Now.AddYears(100));
+            }
+            return Ok();
+        }
+
     }
 }

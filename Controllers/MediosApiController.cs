@@ -275,6 +275,7 @@ namespace Api.Crud.Controllers
             {
                 medio.FechaCreacion = DateTime.Now;
                 medio.Borrado = false;
+                medio.Activo = true;
                 _context.MediosDePagos.Add(medio);
                 _context.SaveChanges();
                 Ok();
@@ -351,7 +352,8 @@ namespace Api.Crud.Controllers
                     NumeroTarjeta = tarjetaReq.NumeroTarjeta,
                     Expiracion = tarjetaReq.Expiracion,
                     FechaCreacion = DateTime.Now,
-                    Borrado = false
+                    Borrado = false,
+                    Activo = true
                 };
 
                 _context.Tarjetas.Add(tarjeta);
@@ -389,7 +391,8 @@ namespace Api.Crud.Controllers
                     NumeroDeCuenta = cuentaReq.NumeroDeCuenta,
                     Sucursal = cuentaReq.Sucursal,
                     FechaCreacion = DateTime.Now,
-                    Borrado = false
+                    Borrado = false,
+                    Activo = true
                 };
 
                 _context.Cuentas.Add(cuenta);
@@ -428,7 +431,8 @@ namespace Api.Crud.Controllers
                     UserId = paypalReq.IdUser,
                     FechaCreacion = DateTime.Now,
                     IdEntidadFinanciera = EntidadFinancieraAux,
-                    Borrado = false
+                    Borrado = false,
+                    Activo = true
                 };
 
                 _context.Paypals.Add(paypal);

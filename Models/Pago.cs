@@ -40,5 +40,7 @@ namespace Crud.Models
         public virtual TipoSuscripcion Suscripcion {get; set;}
 
         public string ObservacionDevolucion { get; set; }
+
+        public bool Devuelto { get; set; }
     }
 }

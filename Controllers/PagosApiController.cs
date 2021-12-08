@@ -40,7 +40,7 @@ namespace Crud.Controllers
             {
                 var registroPago = new Pago
                 {
-                    IdMedioDePago = pago.IdMedioDePago,
+                    IdMedioDePago = pago.MedioDePagoId,
                     Fecha = DateTime.Now,
                     //si es PayPal ya se cobró en caso contrario se debe cobrar
                     Aprobado = pago.EsPayPal,
@@ -80,8 +80,6 @@ namespace Crud.Controllers
 
                 try
                 {
-                    await _pagosService.ActualizarFinanzaPagoAsync(pago.Monto, pago.TipoSuscripcionId);
-                  
                     await _context.SaveChangesAsync();
                     return Ok();
                 }
@@ -103,8 +101,13 @@ namespace Crud.Controllers
 
             if (ModelState.IsValid)
             {
+                var porcentaje = decimal.Parse(await _context.Parametros
+                .Where(m => m.Nombre == "GananciaCreador")
+                .Select(m => m.Valor).FirstAsync());
 
-                var pago = _context.Pagos.Where(m => m.IdPago == devolucion.Id).First();
+                var pago = await _context.Pagos.Where(m => m.IdPago == devolucion.Id).FirstAsync();
+                pago.Devuelto = true;
+                _context.Pagos.Update(pago);
 
                 var registroDevolucion = new Pago
                 {
@@ -112,7 +115,7 @@ namespace Crud.Controllers
                     Fecha = DateTime.Now,
                     //si es PayPal ya se devolvió en caso contrario se debe cobrar
                     Aprobado = pago.EsPayPal,
-                    Monto = pago.Monto,
+                    Monto = pago.Monto*porcentaje,
                     Moneda = pago.Moneda,
                     Devolucion = true,
                     EsSuscripcion = pago.EsSuscripcion,
@@ -170,48 +173,18 @@ namespace Crud.Controllers
 
 
         [HttpGet]
-        [Route("api/medios/getPagosPayPal")]
+        [Route("api/pagos/getPagosPayPal")]
         public async Task<ActionResult<IEnumerable<PagosResponse>>> GetPagosPayPal()
         {
-            var user = await _userManager.GetUserAsync(HttpContext.User);
+            var creador = await _userManager.GetUserAsync(HttpContext.User);
 
-            //obtener los pagos de este usuario por medio de PayPal
-            var query = from p in _context.Pagos
-                        join medio in _context.MediosDePagos on p.IdMedioDePago equals medio.Id
-                        join paypal in _context.PagosPayPal on p.IdPago equals paypal.PagoId
-                        where medio.UserId == user.Id && !p.Devolucion
-                        select new PagosResponse {
-                            IdPago = p.IdPago,
-                            Fecha = p.Fecha,
-                            Aprobado = p.Aprobado,
-                            Monto = p.Monto,
-                            Moneda = p.Moneda,
-                            Devolucion = p.Devolucion,
-                            EsSuscripcion = p.EsSuscripcion,
-                            IdPagoDevolucion = p.IdPagoDevolucion,
-                            EsPayPal = p.EsPayPal,
-                            IdCaptura = paypal.IdCaptura
-                        };
-
-            if (query == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(query.ToList());
-
-        }
-
-        [HttpGet]
-        [Route("api/medios/getPagosNoPayPal")]
-        public async Task<ActionResult<IEnumerable<PagosResponse>>> GetPagosNoPayPal()
-        {
-            var user = await _userManager.GetUserAsync(HttpContext.User);
-
-            //obtener los pagos de este usuario que no son PayPal
-            var query = from p in _context.Pagos
-                        join medio in _context.MediosDePagos on p.IdMedioDePago equals medio.Id
-                        where medio.UserId == user.Id && !p.Devolucion && !p.EsPayPal
+            //obtener los pagos a este creador por medio de PayPal
+            var query = (from p in _context.Pagos
+                        join t in _context.TipoSuscripcion on p.TipoSuscripcionId equals t.Id
+                        join m in _context.MediosDePagos on p.IdMedioDePago equals m.Id
+                        join u in _context.Users on m.UserId equals u.Id
+                        where t.CreadorId == creador.Id && p.Aprobado && !p.Devolucion
+                        && p.EsPayPal && !p.Devuelto
                         select new PagosResponse
                         {
                             IdPago = p.IdPago,
@@ -222,7 +195,50 @@ namespace Crud.Controllers
                             Devolucion = p.Devolucion,
                             EsSuscripcion = p.EsSuscripcion,
                             IdPagoDevolucion = p.IdPagoDevolucion,
-                            EsPayPal = p.EsPayPal
+                            EsPayPal = p.EsPayPal,
+                            NombreUsuario = u.UserName + "/" + u.Name + " " + u.Surname,
+                            DetalleSuscripcion = t.Nombre
+                        }).ToList();
+
+            if (query == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(query);
+
+        }
+
+        [HttpGet]
+        [Route("api/pagos/getPagosNoPayPal")]
+        public async Task<ActionResult<IEnumerable<PagosResponse>>> GetPagosNoPayPal()
+        {
+            var creador = await _userManager.GetUserAsync(HttpContext.User);
+
+            var porcentaje = decimal.Parse(await _context.Parametros
+                .Where(m => m.Nombre == "GananciaCreador")
+                .Select(m=>m.Valor).FirstAsync());
+
+            //obtener los pagos para este creador que no son PayPal
+            var query = from p in _context.Pagos
+                        join t in _context.TipoSuscripcion on p.TipoSuscripcionId equals t.Id
+                        join m in _context.MediosDePagos on p.IdMedioDePago equals m.Id
+                        join u in _context.Users on m.UserId equals u.Id
+                        where t.CreadorId == creador.Id && p.Aprobado && !p.Devolucion
+                        && !p.EsPayPal && !p.Devuelto
+                        select new PagosResponse
+                        {
+                            IdPago = p.IdPago,
+                            Fecha = p.Fecha,
+                            Aprobado = p.Aprobado,
+                            Monto = p.Monto*porcentaje,
+                            Moneda = p.Moneda,
+                            Devolucion = p.Devolucion,
+                            EsSuscripcion = p.EsSuscripcion,
+                            IdPagoDevolucion = p.IdPagoDevolucion,
+                            EsPayPal = p.EsPayPal,
+                            NombreUsuario = u.UserName + "/" + u.Name + " " + u.Surname,
+                            DetalleSuscripcion = t.Nombre
                         };
 
             if (query == null)

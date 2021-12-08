@@ -4,7 +4,9 @@ using System;
 using System.IO;
 using System.Net;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Crud.DTOs;
 
 namespace Crud.Data
 {
@@ -64,6 +66,23 @@ namespace Crud.Data
                 Console.WriteLine(ex.ToString());
             }
             return null;
+        }
+
+        public static string GetImageBlob(string filename)
+        {
+            byte[] contenido = FTPElastic.DownloadFileFTP(filename);
+            Regex regex = new Regex(".*\\.");
+            string type = regex.Replace(filename, string.Empty);
+            return "data:image/" + type + ";base64," + Convert.ToBase64String(contenido);
+        }
+
+        public static string FileUpload(FileDto.File file)
+        {
+            Regex regex = new Regex(@"^[\w/\:.-]+;base64,");
+            string data = regex.Replace(file.Data, string.Empty);
+            byte[] fileContents = Convert.FromBase64String(data);
+            var resUpdate = UploadFileFTP(fileContents, file.Extension);
+            return resUpdate;
         }
     }
 }

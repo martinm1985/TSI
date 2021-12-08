@@ -58,7 +58,7 @@ namespace Crud.Controllers
                 CreadorId = id
             };
 
-            var userModel = _context.Users.Include(u=> u.Siguiendo).FirstOrDefault(u => u.Id == user.Id);
+            var userModel = _context.Users.Include(u => u.Siguiendo).FirstOrDefault(u => u.Id == user.Id);
             userModel.Siguiendo.Add(userCreador);
 
             _context.SaveChanges();
@@ -75,12 +75,12 @@ namespace Crud.Controllers
             var user = await _identityService.GetUserInfo(HttpContext.User);
 
 
-            if (user == null )
+            if (user == null)
             {
                 return BadRequest(HttpContext.User.FindFirst(c => c.Type == ClaimTypes.NameIdentifier).Value);
             }
 
-        
+
 
             var userModel = _context.Users.Include(u => u.Siguiendo).FirstOrDefault(u => u.Id == user.Id);
             var userCreador = userModel.Siguiendo.FirstOrDefault(u => u.CreadorId == id);
@@ -94,7 +94,7 @@ namespace Crud.Controllers
 
         [HttpGet("following")]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-        public async Task<ActionResult<IEnumerable<Object>>> GetFollowingList()
+        public async Task<ActionResult<IEnumerable<Object>>> GetFollowingList(int page, int pageSize, string search)
         {
             var user = await _identityService.GetUserInfo(HttpContext.User);
 
@@ -116,6 +116,10 @@ namespace Crud.Controllers
                     _context.Creadores
                     .Where(u => u.Id == id)
                     .Include(c => c.Usuario)
+                    .Where(c => (String.IsNullOrEmpty(search) ||
+                                    (c.Usuario.UserName.Contains(search) ||
+                                    c.Usuario.Name.Contains(search) ||
+                                    c.Usuario.Surname.Contains(search))))
                     .Select(item => new
                     {
                         userid = item.UserId,
@@ -125,18 +129,18 @@ namespace Crud.Controllers
                     }).FirstOrDefault()
                     );
 
-
+            creatorsList = creatorsList.Where(c => c != null).Skip(pageSize * (page - 1)).Take(pageSize);
 
             return Ok(creatorsList);
         }
 
         [HttpGet("followers")]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-        public async Task<ActionResult<IEnumerable<Object>>> GetFollowersList()
+        public async Task<ActionResult<IEnumerable<Object>>> GetFollowersList(int page, int pageSize, string search)
         {
             var user = await _identityService.GetUserInfo(HttpContext.User);
 
-            
+
             if (user == null || user.Creador == null)
             {
                 return BadRequest(HttpContext.User.FindFirst(c => c.Type == ClaimTypes.NameIdentifier).Value);
@@ -153,6 +157,10 @@ namespace Crud.Controllers
                 .Select(id =>
                     _context.Usuarios
                     .Where(u => u.Id == id)
+                    .Where(c => (String.IsNullOrEmpty(search) ||
+                                    (c.UserName.Contains(search) ||
+                                    c.Name.Contains(search) ||
+                                    c.Surname.Contains(search))))
                     .Select(item => new
                     {
                         userid = item.Id,
@@ -162,10 +170,100 @@ namespace Crud.Controllers
                     }).FirstOrDefault()
                     );
 
-
+            creatorsList = creatorsList.Where(c => c != null).Skip(pageSize * (page - 1)).Take(pageSize);
 
             return Ok(creatorsList);
         }
+
+        [HttpGet("subscriptions")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        public async Task<ActionResult<IEnumerable<Object>>> GetSubscriptionsList(int page, int pageSize, string search)
+        {
+            var user = await _identityService.GetUserInfo(HttpContext.User);
+
+
+            if (user == null)
+            {
+                return BadRequest(HttpContext.User.FindFirst(c => c.Type == ClaimTypes.NameIdentifier).Value);
+            }
+
+            var subscriptionsList = _context.SuscripcionUsuario
+                .Include(s => s.TipoSuscripcion)
+                .Where(u => u.UsuarioId == user.Id)
+                .Select(item => item.TipoSuscripcion.CreadorId)
+                .ToList();
+
+            var creatorsList = subscriptionsList
+                .Select(id =>
+                    _context.Creadores
+                    .Where(u => u.Id == id)
+                    .Where(c => (String.IsNullOrEmpty(search) || (
+                                    c.Usuario.UserName.Contains(search) ||
+                                    c.Usuario.Name.Contains(search) ||
+                                    c.Usuario.Surname.Contains(search)
+                                   ))
+                            )
+                    .Where(c => c.Usuario.LockoutEnd == null)
+                    .Include(c => c.Usuario)
+                    .Select(item => new
+                    {
+                        userid = item.UserId,
+                        username = item.Usuario.UserName,
+                        name = item.Usuario.Name,
+                        surname = item.Usuario.Surname,
+                    }).FirstOrDefault()
+                    );
+
+            creatorsList = creatorsList.Where(c => c != null).Skip(pageSize * (page - 1)).Take(pageSize);
+
+            return Ok(creatorsList);
+        }
+
+        [HttpGet("subscribers")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        public async Task<ActionResult<IEnumerable<Object>>> GetSubscribersList(int page, int pageSize, string search)
+        {
+            var user = await _identityService.GetUserInfo(HttpContext.User);
+
+
+            if (user == null || user.Creador == null)
+            {
+                return BadRequest(HttpContext.User.FindFirst(c => c.Type == ClaimTypes.NameIdentifier).Value);
+            }
+
+            var subscribersList = _context.SuscripcionUsuario
+                .Include(s => s.TipoSuscripcion)
+                .Where(s => s.TipoSuscripcion.CreadorId == user.Id)
+                .Select(item => item.UsuarioId)
+                .ToList();
+
+            var usersList = subscribersList
+                .Select(id =>
+                    _context.Usuarios
+                    .Include(u => u.Creador)
+                    .Where(u => u.Id == id)
+                    .Where(c => (String.IsNullOrEmpty(search) || (
+                                    c.UserName.Contains(search) ||
+                                    c.Name.Contains(search) ||
+                                    c.Surname.Contains(search)
+                                   ))
+                            )
+                    .Where(c => c.LockoutEnd == null)
+                    .Select(item => new
+                    {
+                        userid = item.Id,
+                        username = item.UserName,
+                        name = item.Name,
+                        surname = item.Surname,
+                        isCreator = item.Creador != null,
+                    }).FirstOrDefault()
+                    );
+
+            usersList = usersList.Where(c => c != null).Skip(pageSize * (page - 1)).Take(pageSize);
+
+            return Ok(usersList);
+        }
+
 
         [HttpPut]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -188,6 +286,30 @@ namespace Crud.Controllers
                     creador.Descripcion = request.Creador.Descripcion;
                     creador.Categoria1 = _context.Categoria.Find(request.Creador.Categoria1Id);
                     creador.Categoria2 = _context.Categoria.Find(request.Creador.Categoria2Id);
+                    if (request.Imagen != null && request.Imagen.Extension != "")
+                    {
+                        try
+                        {
+                            var res = Data.FTPElastic.FileUpload(request.Imagen);
+                            creador.Imagen = res.ToString() + "." + request.Imagen.Extension;
+                        }
+                        catch
+                        {
+                            BadRequest();
+                        }
+                    }
+                    if (request.ImagePortada != null && request.ImagePortada.Extension != "")
+                    {
+                        try
+                        {
+                            var res = Data.FTPElastic.FileUpload(request.ImagePortada);
+                            creador.ImagePortada = res.ToString() + "." + request.ImagePortada.Extension;
+                        }
+                        catch
+                        {
+                            BadRequest();
+                        }
+                    }
                     _context.Entry(creador).State = EntityState.Modified;
                 }
 
@@ -210,7 +332,174 @@ namespace Crud.Controllers
 
         }
 
-      
+        [HttpGet("{id}")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "AdminAuthorization")]
+
+        public async Task<ActionResult<IEnumerable<Object>>> GetUserInfo(string id)
+        {
+            var user = await _identityService.GetUserInfo(HttpContext.User);
+            if (user == null || !user.isAdministrador)
+            {
+                return Unauthorized();
+            }
+            var userInfo = _context.Usuarios
+                .Where(u => u.Id == id)
+                .Select(u => new
+                {
+                    userId = u.Id,
+                    Username = u.UserName,
+                    u.Name,
+                    u.Surname,
+                }).FirstOrDefault();
+
+            return Ok(userInfo);
+        }
+
+
+        [HttpPost("{id}")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "AdminAuthorization")]
+
+        public async Task<ActionResult<IEnumerable<Object>>> EditUser(string id, UserData request)
+        {
+            var user = await _identityService.GetUserInfo(HttpContext.User);
+            if (user == null || !user.isAdministrador)
+            {
+                return Unauthorized();
+            }
+
+            var userData = _context.Users.Find(id);
+            userData.Name = request.Name;
+            userData.Surname = request.Surname;
+            userData.UserName = request.Username;
+            _context.Entry(userData).State = EntityState.Modified;
+            try
+            {
+                _context.SaveChanges();
+            }
+            catch (Exception ex) { return BadRequest(ex.ToString()); }
+            return Ok();
+        }
+
+        // GET: api/<UserController>
+        [HttpGet]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "AdminAuthorization")]
+
+        public async Task<ActionResult<IEnumerable<Object>>> GetUsers(int page, int pageSize, string search)
+        {
+            var user = await _identityService.GetUserInfo(HttpContext.User);
+            if (user == null || !user.isAdministrador)
+            {
+                return Unauthorized();
+            }
+
+            IQueryable<Object> users;
+            if (String.IsNullOrEmpty(search))
+            {
+                users = _context.Users
+                                .Include(c => c.Creador)
+                                .Select(item => new
+                                {
+                                    userid = item.Id,
+                                    username = item.UserName,
+                                    name = item.Name,
+                                    surname = item.Surname,
+                                    isCreador = item.Creador != null,
+                                    item.isAdministrador,
+                                    isBlocked = item.LockoutEnd != null && 
+                                    DateTimeOffset.Compare((DateTimeOffset)item.LockoutEnd, DateTimeOffset.UtcNow) > 0
+                                })
+                                .Skip(pageSize * (page - 1))
+                                .Take(pageSize);
+
+            }
+            else
+            {
+                users = _context.Users
+                               .Where(c => (c.UserName.Contains(search) ||
+                                            c.Name.Contains(search) ||
+                                            c.Surname.Contains(search)))
+                               .Include(c => c.Creador)
+                                .Select(item => new
+                                {
+                                    userid = item.Id,
+                                    username = item.UserName,
+                                    name = item.Name,
+                                    surname = item.Surname,
+                                    isCreador = item.Creador != null,
+                                    item.isAdministrador,
+                                    isBlocked = item.LockoutEnd != null &&
+                                    DateTimeOffset.Compare((DateTimeOffset)item.LockoutEnd, DateTimeOffset.UtcNow) > 0
+                                })
+                                .Skip(pageSize * (page - 1))
+                                .Take(pageSize);
+
+            }
+
+            return await users.ToListAsync();
+
+        }
+
+        // GET: api/<UserController>
+        [HttpGet("admins")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "AdminAuthorization")]
+
+        public async Task<ActionResult<IEnumerable<Object>>> GetAdmins(int page, int pageSize, string search)
+        {
+            var user = await _identityService.GetUserInfo(HttpContext.User);
+            if (user == null || !user.isAdministrador)
+            {
+                return Unauthorized();
+            }
+
+            IQueryable<Object> users;
+            if (String.IsNullOrEmpty(search))
+            {
+                users = _context.Users
+                                .Where(u => u.isAdministrador)
+                                .Include(c => c.Creador)
+                                .Select(item => new
+                                {
+                                    userid = item.Id,
+                                    username = item.UserName,
+                                    name = item.Name,
+                                    surname = item.Surname,
+                                    isCreador = item.Creador != null,
+                                    item.isAdministrador,
+                                    isBlocked = item.LockoutEnd != null &&
+                                    DateTimeOffset.Compare((DateTimeOffset)item.LockoutEnd, DateTimeOffset.UtcNow) > 0
+                                })
+                                .Skip(pageSize * (page - 1))
+                                .Take(pageSize);
+
+            }
+            else
+            {
+                users = _context.Users
+                                .Where(u => u.isAdministrador)
+                                .Where(c => (c.UserName.Contains(search) ||
+                                            c.Name.Contains(search) ||
+                                            c.Surname.Contains(search)))
+                                .Include(c => c.Creador)
+                                .Select(item => new
+                                {
+                                    userid = item.Id,
+                                    username = item.UserName,
+                                    name = item.Name,
+                                    surname = item.Surname,
+                                    isCreador = item.Creador != null,
+                                    item.isAdministrador,
+                                    isBlocked = item.LockoutEnd != null &&
+                                    DateTimeOffset.Compare((DateTimeOffset)item.LockoutEnd, DateTimeOffset.UtcNow) > 0
+                                })
+                                .Skip(pageSize * (page - 1))
+                                .Take(pageSize);
+
+            }
+
+            return await users.ToListAsync();
+
+        }
+
 
     }
 }
