@@ -152,7 +152,7 @@ namespace Crud.Services
             };
         }
 
-        public async Task<object> Login(string email, string password)
+        public async Task<object> Login(string email, string password, bool socialNetwork, string idFacebook)
         {
 
             try
@@ -169,7 +169,15 @@ namespace Crud.Services
                 };
             }
 
-            var user = await _userManager.FindByEmailAsync(email);
+            var user = !socialNetwork ? null : await (from u in _context.Users
+                                  where u.IdFacebook == idFacebook
+                                  select u).FirstOrDefaultAsync();
+            
+
+            if (user == null)
+            {
+                user = await _userManager.FindByEmailAsync(email);
+            }
 
             var lockoutDate = await _userManager.GetLockoutEndDateAsync(user);
 
@@ -188,8 +196,16 @@ namespace Crud.Services
                     Error = "Email/Password combination not correct"
                 };
             }
+            else
+            {
+                user.IdFacebook = idFacebook;
+                _context.Update(user);
+                await _context.SaveChangesAsync();
+            }
 
-            var isPasswordCorrect = await _userManager.CheckPasswordAsync(user, password);
+            // login with social network after check with api of socialNetwork when socialNetwork is true
+            // dont'n need CheckPassword
+            var isPasswordCorrect = socialNetwork ? true : await _userManager.CheckPasswordAsync(user, password);
 
             if (!isPasswordCorrect)
             {

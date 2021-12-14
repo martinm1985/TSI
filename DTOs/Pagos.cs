@@ -35,4 +35,15 @@ namespace Crud.DTOs
         public string NombreUsuario { get; set; }
         public string DetalleSuscripcion { get; set; }
     }
+
+    public class GananciaCreador
+    {
+        public string Nombre { get; set; }
+        public string Apellido { get; set; }
+        public string Usuario { get; set; }
+        public DateTime FechaMes { get; set; }
+        public decimal Monto { get; set; }
+        public string EntidadFinanciera { get; set; }
+        public string NumeroDeCuenta { get; set; }
+    }
 }

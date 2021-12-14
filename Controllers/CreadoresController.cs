@@ -214,6 +214,8 @@ namespace Crud.Controllers
                 Categoria2 = _context.Categoria.Find(creadorRegister.Categoria2Id),
                 UserId = user.Id,
                 Id = user.Id,
+                EntidadFinanciera = creadorRegister.EntidadFinanciera,
+                NumeroDeCuenta = creadorRegister.NumeroDeCuenta
             };
             try
             {
@@ -284,7 +286,7 @@ namespace Crud.Controllers
             _context.Creadores.Add(creador);
             _context.SaveChanges();
 
-            return Ok(_mapper.Map<UserData>(
+            var userres = _mapper.Map<UserData>(
                 await _context.Usuarios
                 .Where(c => c.Id == user.Id)
                 .Include(s => s.Creador)
@@ -292,7 +294,8 @@ namespace Crud.Controllers
                 .Include(c => c.Creador.Categoria2)
                 .Include(c => c.Creador.TiposDeSuscripciones)
                 .FirstOrDefaultAsync()
-                ));
+                );
+            return Ok(userres.Creador);
         }
 
         // PUT api/<CreadoresController>/5

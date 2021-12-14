@@ -4,14 +4,16 @@ using Crud.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Crud.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20211212222257_loginFacebook")]
+    partial class loginFacebook
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -144,9 +146,6 @@ namespace Crud.Migrations
                     b.Property<string>("Descripcion")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("EntidadFinanciera")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("ImagePortada")
                         .HasColumnType("nvarchar(max)");
 
@@ -154,9 +153,6 @@ namespace Crud.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("MsjBienvenidaGral")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("NumeroDeCuenta")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("UserId")
@@ -738,16 +734,16 @@ namespace Crud.Migrations
                         {
                             Id = "1",
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "e23dd49d-3905-4b2e-9ce6-5f5f098d654e",
+                            ConcurrencyStamp = "a2841487-d855-40cb-b214-d6fb69f93e78",
                             Email = "creadoresuyadmin@gmail.com",
                             EmailConfirmed = false,
                             LockoutEnabled = false,
                             Name = "Creadores",
                             NormalizedEmail = "CREADORESUYADMIN@GMAIL.COM",
                             NormalizedUserName = "CREADORESUY",
-                            PasswordHash = "AQAAAAEAACcQAAAAEPuQv3c3aPudSbKH1scMS+gnVGuD7HlcUYcdfVKFOqUdHZ5r2yE6DQxsA5gZOHhsrg==",
+                            PasswordHash = "AQAAAAEAACcQAAAAEIGrs/J1GtUfEP+oAZVSXjbNosGynyGYx5GnIuqXDF9AlkEW+oJvMcwPDi3cZ/QSRg==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "81c04d0b-361a-4622-9f9d-4eb0095cdf2e",
+                            SecurityStamp = "d18d7a8a-e30a-41b4-90b7-b584e771690a",
                             Surname = "UY",
                             TwoFactorEnabled = false,
                             UserName = "CreadoresUY",
@@ -800,7 +796,7 @@ namespace Crud.Migrations
                         new
                         {
                             Id = "1",
-                            ConcurrencyStamp = "cbde229a-f053-4807-9fca-5d8c720c64c2",
+                            ConcurrencyStamp = "d0e39971-ed4a-40b8-bf05-7c565d9662eb",
                             Name = "Administrator",
                             NormalizedName = "ADMINISTRATOR"
                         });

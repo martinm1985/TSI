@@ -11,6 +11,13 @@ namespace Crud.DTOs
     {
         public string Username { get; set; }
         public string Password { get; set; }
+        public string FacebookToken { get; set; }
+    }
+
+    public record FacebookResponse
+    {
+        public string Email { get; set; }
+        public string Id { get; set; }
     }
 
     public record UserRegister
@@ -69,6 +76,8 @@ namespace Crud.DTOs
         public int Categoria1Id { get; set; }
         public int Categoria2Id { get; set; }
         public string UserId { get; set; }
+        public string EntidadFinanciera { get; set; }
+        public string NumeroDeCuenta { get; set; }
 
     }
 
@@ -99,6 +108,8 @@ namespace Crud.DTOs
         public int Categoria2Id { get; set; }
         public Categoria Categoria1 { get; set; }
         public Categoria Categoria2 { get; set; }
+        public string EntidadFinanciera { get; set; }
+        public string NumeroDeCuenta { get; set; }
 
 
     }

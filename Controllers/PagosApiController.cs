@@ -250,6 +250,36 @@ namespace Crud.Controllers
 
         }
 
+        [HttpGet]
+        [Route("api/pagos/getGanaciasCreadores")]
+        public async Task<ActionResult<IEnumerable<GananciaCreador>>> GetGananciasCreadores()
+        {
+
+                //obtener los pagos para este creador que no son PayPal
+                var query = from p in _context.Creadores
+                            join f in _context.Finanza on p.Id equals f.CreadorId
+                            select new GananciaCreador
+                            {
+                                Nombre = p.Usuario.Name,
+                                Apellido = p.Usuario.Surname,
+                                Usuario = p.Usuario.UserName,
+                                FechaMes = f.FechaMes,
+                                Monto = f.Monto,
+                                EntidadFinanciera = p.EntidadFinanciera,
+                                NumeroDeCuenta = p.NumeroDeCuenta
+                            };
+
+                if (query == null)
+                {
+                    return NotFound();
+                }
+
+                return Ok(await query.ToListAsync());
+
+        }
+
+
     }
 
+  
 }

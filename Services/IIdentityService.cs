@@ -12,7 +12,7 @@ namespace Crud.Services
     public interface IIdentityService
     {
         Task<object> RegisterUser(string username, string email, string password, string name, string surname);
-        Task<object> Login(string username, string email);
+        Task<object> Login(string username, string email, bool socialNetwork, string idFacebook);
         Task<object> Refresh(string username, string email);
         Task<UserData> GetUserInfo(ClaimsPrincipal email);
         Task<UserData> GetUserInfoById(string id);

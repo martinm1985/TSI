@@ -153,8 +153,12 @@ namespace Crud.Controllers
                               FechaFin = liveStream.FechaFin.ToShortDateString(),
                               SuscripcionId = tipoSusc.Id,
                           });
-                          
-            if (user != null && user.isAdministrador) return Ok(result);
+
+            if (user != null && user.isAdministrador)
+            {
+                result = result.Skip((page - 1) * pageSize).Take(pageSize);
+                return Ok(result);
+            }
 
             var suscripcionUsuario = _context.SuscripcionUsuario
                                     .Where(s => s.UsuarioId == user.Id)

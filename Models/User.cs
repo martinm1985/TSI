@@ -18,6 +18,7 @@ namespace Crud.Models
         public string Name {get; set;}
         public bool isAdministrador { get; set; }
         public string Surname {get; set;}
+        public string IdFacebook { get; set; }
         public ICollection<UserCreador> Siguiendo { get; set; }
         public ICollection<Conversacion> Conversaciones { get; set; }
         public ICollection<MediosDePagos> MediosDePago { get; set; }
@@ -63,6 +64,8 @@ namespace Crud.Models
         public string Biografia { get; set; }
         public string VideoYoutube { get; set; }
         public string MsjBienvenidaGral { get; set; }
+        public string EntidadFinanciera { get; set; }
+        public string NumeroDeCuenta { get; set; }
 
     }
 }

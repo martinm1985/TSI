@@ -286,6 +286,8 @@ namespace Crud.Controllers
                     creador.Descripcion = request.Creador.Descripcion;
                     creador.Categoria1 = _context.Categoria.Find(request.Creador.Categoria1Id);
                     creador.Categoria2 = _context.Categoria.Find(request.Creador.Categoria2Id);
+                    creador.EntidadFinanciera = request.Creador.EntidadFinanciera;
+                    creador.NumeroDeCuenta = request.Creador.NumeroDeCuenta;
                     if (request.Imagen != null && request.Imagen.Extension != "")
                     {
                         try

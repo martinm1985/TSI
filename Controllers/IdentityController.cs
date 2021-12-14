@@ -13,6 +13,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.Identity;
 using System.Web;
+using System.Net.Http;
+using Newtonsoft.Json;
 
 namespace Crud.Controllers
 {
@@ -90,7 +92,28 @@ namespace Crud.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login (LoginRequest request)
         {
-            var res = await _identityService.Login(request.Username, request.Password);
+            var res = new object();
+
+            if (request.FacebookToken == null)
+            {
+                res = await _identityService.Login(request.Username, request.Password, false, null);
+            }
+            else
+            {
+                using var client = new HttpClient();
+
+                var url = "https://graph.facebook.com/me?fields=email&access_token=" + request.FacebookToken;
+
+                var result = await client.GetAsync(url);
+
+                var contents = await result.Content.ReadAsStringAsync();
+
+                FacebookResponse json = JsonConvert.DeserializeObject<FacebookResponse>(contents);
+
+                Console.WriteLine(json.Id);
+                Console.WriteLine(json.Email);
+                res = await _identityService.Login(json.Email, null, true, json.Id);
+            }
 
             if (res.GetType() == typeof(ResponseFailure))
             {
@@ -98,6 +121,7 @@ namespace Crud.Controllers
             }
 
             return Ok(res);
+
         }
 
         [HttpPost("refresh")]
