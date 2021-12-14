@@ -28,7 +28,7 @@ namespace Crud.Controllers
         private readonly EstadisticaPlataformaService _estPlataformaService;
 
         public CreadoresController(
-            ApplicationDbContext context, 
+            ApplicationDbContext context,
             IMapper mapper,
             IIdentityService identityService,
             EstadisticaCreadorService estCreadorService,
@@ -89,6 +89,48 @@ namespace Crud.Controllers
 
         }
 
+        // GET: api/<CreadoresController>
+        [HttpGet("searchMobile")]
+        public async Task<ActionResult<Object>> GetCreadoresSearchMobile(string? search, int page, int pagesize)
+        {
+            var creadores = _context.Creadores
+                                .Where(c => c.Usuario.LockoutEnd == null)
+                                .Include(c => c.Usuario)
+                                .Select(item => new
+                                {
+                                    userid = item.UserId,
+                                    username = item.Usuario.UserName,
+                                    name = item.Usuario.Name,
+                                    surname = item.Usuario.Surname,
+                                });
+
+
+            if (!String.IsNullOrEmpty(search))
+            {
+                creadores = _context.Creadores
+                               .Where(c => (c.Usuario.UserName.Contains(search) ||
+                                            c.Usuario.Name.Contains(search) ||
+                                            c.Usuario.Surname.Contains(search)))
+                               .Include(c => c.Usuario)
+                                .Select(item => new
+                                {
+                                    userid = item.UserId,
+                                    username = item.Usuario.UserName,
+                                    name = item.Usuario.Name,
+                                    surname = item.Usuario.Surname,
+                                });
+
+            }
+            var total = creadores.Count();
+
+            return new
+            {
+                total = total,
+                values = await creadores.ToListAsync()
+            };
+
+        }
+
         // GET api/<CreadoresController>/5
         [HttpGet("{id}")]
         public async Task<ActionResult<UserData>> GetCreador(string id)
@@ -130,7 +172,7 @@ namespace Crud.Controllers
                 }
             }
             catch (Exception) { }
-            
+
             try
             {
                 _estPlataformaService.AddVisitaPerfil();
@@ -146,7 +188,7 @@ namespace Crud.Controllers
         {
             var creador = _context.Creadores.Find(id);
             if (creador == null) return BadRequest();
-            
+
             string imagen = "";
             string imagePortada = "";
 
@@ -158,7 +200,7 @@ namespace Crud.Controllers
                 }
             } catch { };
             try
-            { 
+            {
                 if (creador.ImagePortada != null && creador.ImagePortada != "")
                 {
                     imagePortada = Data.FTPElastic.GetImageBlob(creador.ImagePortada);
@@ -205,8 +247,8 @@ namespace Crud.Controllers
             var creador = new Creador
             {
                 Descripcion = creadorRegister.Descripcion,
-                Imagen = "", 
-                ImagePortada = "", 
+                Imagen = "",
+                ImagePortada = "",
                 Biografia = creadorRegister.Biografia,
                 VideoYoutube = creadorRegister.VideoYoutube,
                 MsjBienvenidaGral = creadorRegister.MsjBienvenidaGral,

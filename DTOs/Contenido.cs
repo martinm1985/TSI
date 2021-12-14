@@ -82,6 +82,12 @@ namespace Crud.DTOs
             public string FechaFin { get; set; }
             public int? SuscripcionId { get; set; }
         }
-                           
+
+        public record GetAllContenidoMobile
+        {
+            public int total {get; set;}
+            public List<ContenidoDto.GetAllContenido> values {get; set;}
+        }
+
     }
 }
