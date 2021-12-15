@@ -15,18 +15,20 @@ namespace Crud.Services
 {
     public class PagosService : IPagoService
     {
-        private readonly ILogger<NotificationJob> _logger;
-        private readonly ApplicationDbContext _context;
+        private readonly IServiceScopeFactory _scopeFactory;
 
-        public PagosService(ILogger<NotificationJob> logger, IServiceScopeFactory scopeFactory)
+        public PagosService(IServiceScopeFactory scopeFactory)
         {
-            _logger = logger;
-            _context = scopeFactory.CreateScope().ServiceProvider.GetRequiredService<ApplicationDbContext>(); ;
+            _scopeFactory = scopeFactory;
         }
 
 
         public async Task ActualizarFinanzaPagoAsync(decimal monto, int idTipoSuscripcion)
         {
+            using var scope = _scopeFactory.CreateScope();
+            var _context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            _context = _scopeFactory.CreateScope().ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
             var finanzaQuery = (from f in _context.Finanza
                             join s in _context.TipoSuscripcion on f.CreadorId equals s.CreadorId
                             where s.Id == idTipoSuscripcion && (f.FechaMes.Month == DateTime.Now.Month
@@ -109,6 +111,9 @@ namespace Crud.Services
 
         public async Task ActualizarFinanzaDevolucionAsync(int idPago)
         {
+            using var scope = _scopeFactory.CreateScope();
+            var _context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
             var pago = await _context.Pagos.FindAsync(idPago);
 
             var finanzaQuery = (from f in _context.Finanza
@@ -160,6 +165,9 @@ namespace Crud.Services
 
         public async Task CobroDePagos()
         {
+            using var scope = _scopeFactory.CreateScope();
+            var _context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
             var pagos = await (from u in _context.Users
                                 join m in _context.MediosDePagos on u.Id equals m.UserId
                                 join s in _context.SuscripcionUsuario on u.Id equals s.UsuarioId
@@ -223,6 +231,9 @@ namespace Crud.Services
 
         public async Task SuscripcionesNoPagas()
         {
+            using var scope = _scopeFactory.CreateScope();
+            var _context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
             var suscripciones = await (from u in _context.Users
                                        join s in _context.SuscripcionUsuario on u.Id equals s.UsuarioId
                                        where u.LockoutEnd == null
@@ -243,12 +254,10 @@ namespace Crud.Services
                                  where
                                  m.UserId == suscripcion.UsuarioId &&
                                  p.TipoSuscripcionId == suscripcion.TipoSuscripcionId &&
-                                 (p.Fecha < fechapago.AddDays(1) &&
-                                 p.Fecha >= fechapago) &&
-                                 p.Aprobado
-                                 select p).FirstAsync();
+                                 p.Fecha < DateTime.Now && p.Aprobado
+                                 select p).CountAsync();
 
-                    if (query == null && suscripcion.Activo)
+                    if ((await query == meses) && suscripcion.Activo)
                     {
                         var suscripcionUpdate = await _context.SuscripcionUsuario.FindAsync(suscripcion.Id);
                         suscripcionUpdate.Activo = false;
@@ -280,6 +289,9 @@ namespace Crud.Services
 
         public async Task ActualizacionSuscripciones()
         {
+            using var scope = _scopeFactory.CreateScope();
+            var _context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
             var suscripciones = await (from u in _context.Users
                                join s in _context.SuscripcionUsuario on u.Id equals s.UsuarioId
                                where u.LockoutEnd == null && s.Activo
@@ -311,7 +323,14 @@ namespace Crud.Services
 
         public async Task ActualizacionTarjetas()
         {
+            using var scope = _scopeFactory.CreateScope();
+            var _context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+            _context = _scopeFactory.CreateScope().ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
             var tarjetas = await (from t in _context.Tarjetas
+                                  join u in _context.Users on t.UserId equals u.Id
+                                  where !t.Borrado && u.LockoutEnd == null
                                   select t.Id).Distinct().ToListAsync();
             var i = 0;
 
@@ -322,7 +341,6 @@ namespace Crud.Services
                     tarjetaUpdate.Activo != (tarjetaUpdate.Expiracion.Year > DateTime.Now.Year
                     || (tarjetaUpdate.Expiracion.Year == DateTime.Now.Year
                     && tarjetaUpdate.Expiracion.Month >= DateTime.Now.Month));
-
                 if (actualizar)
                 {
                     tarjetaUpdate.Activo = !tarjetaUpdate.Activo;
@@ -345,8 +363,6 @@ namespace Crud.Services
             };
 
             Console.WriteLine($" Se activaron/vencieron {i} tarjetas nuevas.");
-
-
 
         }
 

@@ -32,7 +32,7 @@ namespace Crud
                     services.AddSingleton<IJobFactory, JobFactory>();
                     services.AddSingleton<ISchedulerFactory, StdSchedulerFactory>();
                     services.AddSingleton<NotificationJob>();
-
+                    services.AddSingleton<IPagoService, PagosService>();
                     services.AddSingleton(new JobMetadata(Guid.NewGuid(), typeof(NotificationJob), "Notify job", "0/10 * * * * ?"));
 
                     services.AddHostedService<MyScheduler>();

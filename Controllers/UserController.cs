@@ -189,7 +189,7 @@ namespace Crud.Controllers
 
             var subscriptionsList = _context.SuscripcionUsuario
                 .Include(s => s.TipoSuscripcion)
-                .Where(u => u.UsuarioId == user.Id)
+                .Where(u => u.UsuarioId == user.Id && u.Activo)
                 .Select(item => item.TipoSuscripcion.CreadorId)
                 .ToList();
 
@@ -233,7 +233,7 @@ namespace Crud.Controllers
 
             var subscribersList = _context.SuscripcionUsuario
                 .Include(s => s.TipoSuscripcion)
-                .Where(s => s.TipoSuscripcion.CreadorId == user.Id)
+                .Where(s => s.TipoSuscripcion.CreadorId == user.Id && s.Activo)
                 .Select(item => item.UsuarioId)
                 .ToList();
 

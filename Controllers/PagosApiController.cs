@@ -178,11 +178,16 @@ namespace Crud.Controllers
         {
             var creador = await _userManager.GetUserAsync(HttpContext.User);
 
-            //obtener los pagos a este creador por medio de PayPal
-            var query = (from p in _context.Pagos
+            var porcentaje = decimal.Parse(await _context.Parametros
+                .Where(m => m.Nombre == "GananciaCreador")
+                .Select(m => m.Valor).FirstAsync());
+
+            //obtener los pagos para este creador que no son PayPal
+            var query = from p in _context.Pagos
                         join t in _context.TipoSuscripcion on p.TipoSuscripcionId equals t.Id
                         join m in _context.MediosDePagos on p.IdMedioDePago equals m.Id
                         join u in _context.Users on m.UserId equals u.Id
+                        join pp in _context.PagosPayPal on p.IdPago equals pp.PagoId
                         where t.CreadorId == creador.Id && p.Aprobado && !p.Devolucion
                         && p.EsPayPal && !p.Devuelto
                         select new PagosResponse
@@ -190,22 +195,23 @@ namespace Crud.Controllers
                             IdPago = p.IdPago,
                             Fecha = p.Fecha,
                             Aprobado = p.Aprobado,
-                            Monto = p.Monto,
+                            Monto = p.Monto * porcentaje,
                             Moneda = p.Moneda,
                             Devolucion = p.Devolucion,
                             EsSuscripcion = p.EsSuscripcion,
                             IdPagoDevolucion = p.IdPagoDevolucion,
                             EsPayPal = p.EsPayPal,
+                            IdCaptura = pp.IdCaptura,
                             NombreUsuario = u.UserName + "/" + u.Name + " " + u.Surname,
                             DetalleSuscripcion = t.Nombre
-                        }).ToList();
+                        };
 
             if (query == null)
             {
                 return NotFound();
             }
 
-            return Ok(query);
+            return Ok(query.ToList());
 
         }
 

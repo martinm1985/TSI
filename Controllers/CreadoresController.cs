@@ -123,6 +123,9 @@ namespace Crud.Controllers
             }
             var total = creadores.Count();
 
+            creadores = creadores.Skip((page - 1) * pagesize)
+                               .Take(pagesize);
+
             return new
             {
                 total = total,
